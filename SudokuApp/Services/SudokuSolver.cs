@@ -36,7 +36,7 @@ namespace SudokuApp.Services
             }
             return false;
         }
-
+         // test
         private static bool IsValid(SudokuPuzzle puzzle, int row, int col, int num)
         {
             int size = puzzle.Size;
