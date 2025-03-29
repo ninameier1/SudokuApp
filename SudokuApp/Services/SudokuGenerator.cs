@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using SudokuApp.Models;
 
 namespace SudokuApp.Services
@@ -6,36 +7,68 @@ namespace SudokuApp.Services
     // Static class to handle Sudoku puzzle generation logic
     public static class SudokuGenerator
     {
+        // Shared Random instance for better randomness and efficiency
+        private static Random rand = new Random();
+
+        // CancellationTokenSource to handle task cancellation
+        private static CancellationTokenSource _cancellationTokenSource = null;
+
         // Main method to generate a new Sudoku puzzle
-        public static SudokuPuzzle Generate(int size)
+        public static SudokuPuzzle Generate(int size, CancellationToken cancellationToken)
         {
             // Create a new Sudoku puzzle using the model's constructor (size defines the puzzle's dimensions)
             SudokuPuzzle puzzle = new SudokuPuzzle(size);
 
             // Try to fill the board using a backtracking approach. If it fails, throw an exception
-            if (!FillBoard(puzzle, 0, 0))
+            if (!FillBoard(puzzle, 0, 0, cancellationToken))
             {
                 throw new Exception("Unable to generate board.");
             }
 
-            // Create a random number generator
-            Random rand = new Random();
-
             // Generate a random number to vary the difficulty of the puzzle
             int variant = rand.Next(12);
 
-            // Calculate how many cells to remove, making the puzzle more challenging
-            int removeCount = (size * size) / 2 + variant;
+            //// Calculate how many cells to remove, making the puzzle more challenging
+            //int removeCount = (size * size) / 2 + variant;
+
+            // Determine total cells on the board
+            int totalCells = size * size;
+
+            // For a more controlled removal, define a minimum number of clues to leave.
+            int minClues;
+            if (size == 4)
+            {
+                // For a 4x4, leave at least 8 clues (adjust as needed)
+                minClues = 8;
+            }
+            else if (size == 9)
+            {
+                // For a 9x9, you might want at least 17 clues (minimum known for a unique sudoku)
+                minClues = 17;
+            }
+            else if (size == 16)
+            {
+                // For a 16x16, choose a value that makes sense for your puzzle design
+                minClues = 40; // for example
+            }
+            else
+            {
+                // Default fallback
+                minClues = totalCells / 2;
+            }
+
+            // Calculate removal count with a variant and cap it so we leave at least minClues on the board.
+            int removeCount = Math.Min((totalCells / 2) + variant, totalCells - minClues);
 
             // Remove a random set of cells from the board to create the puzzle
-            RemoveCells(puzzle, removeCount);
+            RemoveCells(puzzle, removeCount, cancellationToken);
 
             // Return the generated Sudoku puzzle
             return puzzle;
         }
 
         // Recursive method to fill the Sudoku board using backtracking
-        private static bool FillBoard(SudokuPuzzle puzzle, int row, int col)
+        private static bool FillBoard(SudokuPuzzle puzzle, int row, int col, CancellationToken cancellationToken)
         {
             int size = puzzle.Size;
 
@@ -59,8 +92,14 @@ namespace SudokuApp.Services
                     puzzle.Board[row, col] = num;
 
                     // Recursively try to fill the next cell
-                    if (FillBoard(puzzle, nextRow, nextCol))
+                    if (FillBoard(puzzle, nextRow, nextCol, cancellationToken))
                         return true;
+                }
+
+                // Check for cancellation
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return false;
                 }
             }
 
@@ -77,9 +116,6 @@ namespace SudokuApp.Services
             // Populate the array with numbers from 1 to 'size'
             for (int i = 0; i < size; i++)
                 numbers[i] = i + 1;
-
-            // Create a random number generator
-            Random rand = new Random();
 
             // Shuffle the numbers using the Fisher-Yates shuffle algorithm
             for (int i = 0; i < size; i++)
@@ -122,15 +158,19 @@ namespace SudokuApp.Services
         }
 
         // Method to remove a specific number of cells from the board to create a puzzle
-        private static void RemoveCells(SudokuPuzzle puzzle, int count)
+        private static void RemoveCells(SudokuPuzzle puzzle, int count, CancellationToken cancellationToken)
         {
-            // Create a random number generator
-            Random rand = new Random();
             int size = puzzle.Size;
 
             // While there are still cells to remove
             while (count > 0)
             {
+                // Check for cancellation
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    return;
+                }
+
                 // Pick a random cell position
                 int row = rand.Next(size);
                 int col = rand.Next(size);
@@ -142,6 +182,13 @@ namespace SudokuApp.Services
                     count--; // Decrement the number of remaining cells to remove
                 }
             }
+        }
+
+        // This method will cancel any ongoing task before starting a new one
+        public static void CancelPreviousTask()
+        {
+            _cancellationTokenSource?.Cancel();
+            _cancellationTokenSource = new CancellationTokenSource();
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
+using SudokuApp.Models;
+using SudokuApp.Services;
 
 namespace SudokuApp.CustomControls
 {
@@ -53,7 +55,7 @@ namespace SudokuApp.CustomControls
                 throw new ArgumentException("Puzzle size must be a perfect square.");
 
             gridSize = newSize;
-            // Optionally, recalc cell size based on the current control size
+            // Recalc cell size based on the current control size
             currentCellSize = Math.Min(this.Width, this.Height) / gridSize;
             if (currentCellSize < 20)
                 currentCellSize = 20; // enforce a minimum size

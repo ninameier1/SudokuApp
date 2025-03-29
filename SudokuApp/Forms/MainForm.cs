@@ -280,22 +280,80 @@ namespace SudokuApp.Forms
             // Example: Show a hint for cell (0,0) with the value 5
             sudokuGrid.ShowHint(0, 0, 5);
         }
+        private CancellationTokenSource _cancellationTokenSource = null;
 
-        private void GeneratePuzzle()
+        private async void GeneratePuzzle()
         {
-            Console.WriteLine("GeneratePuzzle triggered");
-            puzzle = SudokuGenerator.Generate(gridSize);  // Generate puzzle based on grid size
-            sudokuGrid.SetPuzzle(puzzle.Board);
-            Logger.Log($"New puzzle generated ({gridSize}x{gridSize})");
+            // Disable buttons
+            Button btnGenerate = (Button)sudokuPanel.Controls["btnGenerate"];
+            Button btnSolve = (Button)sudokuPanel.Controls["btnSolve"];
+            btnGenerate.Enabled = false;
+            btnSolve.Enabled = false;
+
+            // Cancel the previous task if one is running
+            _cancellationTokenSource?.Cancel();
+            _cancellationTokenSource = new CancellationTokenSource();
+            CancellationToken token = _cancellationTokenSource.Token;
+
+            try
+            {
+                // Task.run the puzzle generation without blocking the UI thread
+                await Task.Run(() =>
+                {
+                    // Check for cancellation before starting the task
+                    if (token.IsCancellationRequested)
+                        return;
+
+                    // Generate puzzle with cancellation token
+                    puzzle = SudokuGenerator.Generate(gridSize, token);  // Pass the cancellation token
+                }, token);
+
+                // If the task completes, update the UI
+                this.Invoke((MethodInvoker)delegate
+                {
+                    sudokuGrid.SetPuzzle(puzzle.Board);
+                    Logger.Log($"New puzzle generated ({gridSize}x{gridSize})");
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                // Handle cancellation gracefully if needed
+                this.Invoke((MethodInvoker)delegate
+                {
+                    Logger.Log("Puzzle generation was canceled.");
+                });
+            }
+            finally
+            {
+                // Re-enable buttons after the task is completed or canceled
+                this.Invoke((MethodInvoker)delegate
+                {
+                    btnGenerate.Enabled = true;
+                    btnSolve.Enabled = true;
+                });
+            }
         }
+
+
+
 
         private async Task SolvePuzzleAsync()
         {
+            // Disable buttons
+            Button btnGenerate = (Button)sudokuPanel.Controls["btnGenerate"];
+            Button btnSolve = (Button)sudokuPanel.Controls["btnSolve"];
+            btnGenerate.Enabled = false;
+            btnSolve.Enabled = false;
+
             if (puzzle == null)
             {
                 MessageBox.Show("Generate a puzzle first.");
+                // Re-enable buttons if puzzle is not generated
+                btnGenerate.Enabled = true;
+                btnSolve.Enabled = true;
                 return;
             }
+
             bool solved = await Task.Run(() => SudokuSolver.Solve(puzzle));
             if (solved)
             {
@@ -308,7 +366,12 @@ namespace SudokuApp.Forms
                 MessageBox.Show("No solution found.");
                 Logger.Log("Solve failed.", "ERROR");
             }
+
+            // Re-enable buttons after solving is complete
+            btnGenerate.Enabled = true;
+            btnSolve.Enabled = true;
         }
+
 
         private void ResetPuzzle()
         {
