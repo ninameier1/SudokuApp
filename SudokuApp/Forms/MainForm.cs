@@ -277,12 +277,33 @@ namespace SudokuApp.Forms
 
         private void HintButton_Click(object sender, EventArgs e)
         {
-            // Example: Show a hint for cell (0,0) with the value 5
-            sudokuGrid.ShowHint(0, 0, 5);
+            // Make sure the puzzle has been generated
+            if (puzzle == null)
+            {
+                MessageBox.Show("Please generate a puzzle first.");
+                return;
+            }
+
+            int hintRow, hintCol, hintValue;
+
+            // Get a hint from the solver 
+            if (SudokuSolver.GetHint(puzzle, out hintRow, out hintCol, out hintValue))
+            {
+                // Show the hint for the identified cell
+                sudokuGrid.ShowHint(hintRow, hintCol, hintValue);
+            }
+            else
+            {
+                MessageBox.Show("No hint available.");
+            }
         }
+
+
+
+
         private CancellationTokenSource _cancellationTokenSource = null;
 
-        private async void GeneratePuzzle()
+        private void GeneratePuzzle()
         {
             // Disable buttons
             Button btnGenerate = (Button)sudokuPanel.Controls["btnGenerate"];
@@ -295,44 +316,53 @@ namespace SudokuApp.Forms
             _cancellationTokenSource = new CancellationTokenSource();
             CancellationToken token = _cancellationTokenSource.Token;
 
-            try
+            // Run the puzzle generation in the background without blocking the UI
+            Task.Run(() =>
             {
-                // Task.run the puzzle generation without blocking the UI thread
-                await Task.Run(() =>
+                try
                 {
                     // Check for cancellation before starting the task
                     if (token.IsCancellationRequested)
                         return;
 
-                    // Generate puzzle with cancellation token
-                    puzzle = SudokuGenerator.Generate(gridSize, token);  // Pass the cancellation token
-                }, token);
+                    // Generate the puzzle with the cancellation token
+                    puzzle = SudokuGenerator.Generate(gridSize, token);
 
-                // If the task completes, update the UI
-                this.Invoke((MethodInvoker)delegate
+                    // If the task completes, update the UI
+                    this.Invoke((MethodInvoker)delegate
+                    {
+                        sudokuGrid.SetPuzzle(puzzle.Board);
+                        Logger.Log($"New puzzle generated ({gridSize}x{gridSize})");
+                    });
+                }
+                catch (OperationCanceledException)
                 {
-                    sudokuGrid.SetPuzzle(puzzle.Board);
-                    Logger.Log($"New puzzle generated ({gridSize}x{gridSize})");
-                });
-            }
-            catch (OperationCanceledException)
-            {
-                // Handle cancellation gracefully if needed
-                this.Invoke((MethodInvoker)delegate
+                    // Handle cancellation gracefully
+                    this.Invoke((MethodInvoker)delegate
+                    {
+                        Logger.Log("Puzzle generation was canceled.");
+                    });
+                }
+                catch (Exception ex)
                 {
-                    Logger.Log("Puzzle generation was canceled.");
-                });
-            }
-            finally
-            {
-                // Re-enable buttons after the task is completed or canceled
-                this.Invoke((MethodInvoker)delegate
+                    // Handle any other exceptions
+                    this.Invoke((MethodInvoker)delegate
+                    {
+                        Logger.Log($"Error generating puzzle: {ex.Message}");
+                    });
+                }
+                finally
                 {
-                    btnGenerate.Enabled = true;
-                    btnSolve.Enabled = true;
-                });
-            }
+                    // Re-enable buttons after the task is completed or canceled
+                    this.Invoke((MethodInvoker)delegate
+                    {
+                        btnGenerate.Enabled = true;
+                        btnSolve.Enabled = true;
+                    });
+                }
+            });
         }
+
 
 
 
