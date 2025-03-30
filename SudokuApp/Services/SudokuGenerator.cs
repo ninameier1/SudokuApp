@@ -63,6 +63,7 @@ namespace SudokuApp.Services
             // Remove a random set of cells from the board to create the puzzle
             RemoveCells(puzzle, removeCount, cancellationToken);
 
+
             // Return the generated Sudoku puzzle
             return puzzle;
         }

@@ -92,10 +92,52 @@ namespace SudokuApp.CustomControls
                         cell.IsEditable = true;
                         cell.IsPreFilled = false;
                     }
+
+                    // Reset any previous hint or highlight flags
+                    cell.IsHint = false;
+
+                    // Apply default styling
                     cell.ApplyPreFilledStyle();
+                    cell.BackColor = cell.IsPreFilled ? Color.LightGray : Color.White;
+
+                    // Also update the textbox background if needed:
+                    foreach (Control ctrl in cell.Controls)
+                    {
+                        ctrl.BackColor = cell.BackColor;
+                    }
                 }
             }
         }
+
+        //public void SetPuzzle(int[,] puzzle)
+        //{
+        //    if (puzzle.GetLength(0) != gridSize || puzzle.GetLength(1) != gridSize)
+        //        throw new ArgumentException("Puzzle size does not match the current grid size.");
+
+        //    for (int i = 0; i < gridSize; i++)
+        //    {
+        //        for (int j = 0; j < gridSize; j++)
+        //        {
+        //            SudokuCell cell = cells[i, j];
+        //            int value = puzzle[i, j];
+
+        //            cell.Value = value;
+        //            if (value != 0)
+        //            {
+        //                cell.SetText(value.ToString());
+        //                cell.IsEditable = false;
+        //                cell.IsPreFilled = true;
+        //            }
+        //            else
+        //            {
+        //                cell.SetText("");
+        //                cell.IsEditable = true;
+        //                cell.IsPreFilled = false;
+        //            }
+        //            cell.ApplyPreFilledStyle();
+        //        }
+        //    }
+        //}
 
         // Returns the cell at the specified row and column.
         public SudokuCell GetCell(int row, int col)
@@ -117,9 +159,10 @@ namespace SudokuApp.CustomControls
             {
                 cell.SetText(value.ToString());
                 cell.IsHint = true;
-                cell.BackColor = Color.LightYellow;
+                cell.Highlight(Color.LightYellow);
             }
         }
+
 
 
         // Override OnPaint to draw grid lines (with thicker lines between blocks).

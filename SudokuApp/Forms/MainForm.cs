@@ -20,6 +20,11 @@ namespace SudokuApp.Forms
         private Button resetButton;
         private Button hintButton;
         private int gridSize = 9;
+        private CancellationTokenSource _cancellationTokenSource = null;
+        private int hintCount = 0;
+        private const int maxHints = 5;
+        private Label lblHintCounter;
+
 
         public MainForm()
         {
@@ -127,6 +132,7 @@ namespace SudokuApp.Forms
             hintButton.Click += HintButton_Click;
             sudokuPanel.Controls.Add(hintButton);
 
+
             // ComboBox for puzzle size
             ComboBox cmbSize = new ComboBox
             {
@@ -168,6 +174,17 @@ namespace SudokuApp.Forms
             };
             btnSolve.Click += async (s, e) => await SolvePuzzleAsync();
             sudokuPanel.Controls.Add(btnSolve);
+
+            // Add hint counter
+            lblHintCounter = new Label
+            {
+                Text = "Hints used: 0 / 5",
+                AutoSize = true,
+                Left = btnSolve.Right + 10,
+                Top = cmbSize.Top,
+                Name = "lblHintCounter"
+            };
+            sudokuPanel.Controls.Add(lblHintCounter);
         }
 
         private void LoginButton_Click(object sender, EventArgs e)
@@ -275,22 +292,50 @@ namespace SudokuApp.Forms
             ResetPuzzle();
         }
 
+        //private void HintButton_Click(object sender, EventArgs e)
+        //{
+        //    // Make sure the puzzle has been generated
+        //    if (puzzle == null)
+        //    {
+        //        MessageBox.Show("Please generate a puzzle first.");
+        //        return;
+        //    }
+
+        //    int hintRow, hintCol, hintValue;
+
+        //    // Get a hint from the solver 
+        //    if (SudokuSolver.GetHint(puzzle, out hintRow, out hintCol, out hintValue))
+        //    {
+        //        // Show the hint for the identified cell
+        //        sudokuGrid.ShowHint(hintRow, hintCol, hintValue);
+        //    }
+        //    else
+        //    {
+        //        MessageBox.Show("No hint available.");
+        //    }
+        //}
+
         private void HintButton_Click(object sender, EventArgs e)
         {
-            // Make sure the puzzle has been generated
             if (puzzle == null)
             {
                 MessageBox.Show("Please generate a puzzle first.");
                 return;
             }
 
-            int hintRow, hintCol, hintValue;
+            // Check if the user has exceeded the hint limit
+            if (hintCount >= maxHints)
+            {
+                MessageBox.Show("Maximum hints used.");
+                return;
+            }
 
-            // Get a hint from the solver 
+            int hintRow, hintCol, hintValue;
             if (SudokuSolver.GetHint(puzzle, out hintRow, out hintCol, out hintValue))
             {
-                // Show the hint for the identified cell
                 sudokuGrid.ShowHint(hintRow, hintCol, hintValue);
+                hintCount++;
+                lblHintCounter.Text = $"Hints used: {hintCount} / {maxHints}";
             }
             else
             {
@@ -301,7 +346,6 @@ namespace SudokuApp.Forms
 
 
 
-        private CancellationTokenSource _cancellationTokenSource = null;
 
         private void GeneratePuzzle()
         {
@@ -310,6 +354,13 @@ namespace SudokuApp.Forms
             Button btnSolve = (Button)sudokuPanel.Controls["btnSolve"];
             btnGenerate.Enabled = false;
             btnSolve.Enabled = false;
+
+            // Reset hint count and update counter label
+            hintCount = 0;
+            if (lblHintCounter != null)
+            {
+                lblHintCounter.Text = $"Hints used: {hintCount} / {maxHints}";
+            }
 
             // Cancel the previous task if one is running
             _cancellationTokenSource?.Cancel();
@@ -367,9 +418,121 @@ namespace SudokuApp.Forms
 
 
 
+        //private async Task SolvePuzzleAsync()
+        //{
+        //    // Disable buttons
+        //    Button btnGenerate = (Button)sudokuPanel.Controls["btnGenerate"];
+        //    Button btnSolve = (Button)sudokuPanel.Controls["btnSolve"];
+        //    btnGenerate.Enabled = false;
+        //    btnSolve.Enabled = false;
+
+        //    if (puzzle == null)
+        //    {
+        //        MessageBox.Show("Generate a puzzle first.");
+        //        // Re-enable buttons if puzzle is not generated
+        //        btnGenerate.Enabled = true;
+        //        btnSolve.Enabled = true;
+        //        return;
+        //    }
+
+        //    bool solved = await Task.Run(() => SudokuSolver.Solve(puzzle));
+        //    if (solved)
+        //    {
+        //        sudokuGrid.SetPuzzle(puzzle.Board);
+        //        MessageBox.Show("Solved!");
+        //        Logger.Log("Puzzle successfully solved.", "INFO");
+        //    }
+        //    else
+        //    {
+        //        MessageBox.Show("No solution found.");
+        //        Logger.Log("Solve failed.", "ERROR");
+        //    }
+
+        //    // Re-enable buttons after solving is complete
+        //    btnGenerate.Enabled = true;
+        //    btnSolve.Enabled = true;
+        //}
+
+        //private async Task SolvePuzzleAsync()
+        //{
+        //    // Disable buttons during solving
+        //    Button btnGenerate = (Button)sudokuPanel.Controls["btnGenerate"];
+        //    Button btnSolve = (Button)sudokuPanel.Controls["btnSolve"];
+        //    btnGenerate.Enabled = false;
+        //    btnSolve.Enabled = false;
+
+        //    if (puzzle == null)
+        //    {
+        //        MessageBox.Show("Generate a puzzle first.");
+        //        btnGenerate.Enabled = true;
+        //        btnSolve.Enabled = true;
+        //        return;
+        //    }
+
+        //    // Capture player's input and record which cells were originally editable
+        //    int[,] userInputs = new int[gridSize, gridSize];
+        //    bool[,] wasEditable = new bool[gridSize, gridSize];
+        //    for (int i = 0; i < gridSize; i++)
+        //    {
+        //        for (int j = 0; j < gridSize; j++)
+        //        {
+        //            SudokuCell cell = sudokuGrid.GetCell(i, j);
+        //            userInputs[i, j] = cell.Value;
+        //            wasEditable[i, j] = cell.IsEditable;
+        //        }
+        //    }
+
+        //    // Solve the puzzle asynchronously
+        //    bool solved = await Task.Run(() => SudokuSolver.Solve(puzzle));
+        //    if (solved)
+        //    {
+        //        // Update the grid with the solved puzzle
+        //        sudokuGrid.SetPuzzle(puzzle.Board);
+
+        //        // Highlight the cells that the user filled in
+        //        for (int i = 0; i < gridSize; i++)
+        //        {
+        //            for (int j = 0; j < gridSize; j++)
+        //            {
+        //                // Only override if the cell was originally user editable.
+        //                if (wasEditable[i, j])
+        //                {
+        //                    SudokuCell cell = sudokuGrid.GetCell(i, j);
+        //                    int userVal = userInputs[i, j];
+        //                    int correctVal = puzzle.Board[i, j];
+        //                    // Only highlight if the user had entered a value
+        //                    if (userVal != 0)
+        //                    {
+        //                        if (userVal == correctVal)
+        //                        {
+        //                            cell.Highlight(Color.LightGreen); // Correct answer
+        //                        }
+        //                        else
+        //                        {
+        //                            cell.Highlight(Color.LightCoral);  // Incorrect answer
+        //                        }
+        //                    }
+        //                }
+        //            }
+        //        }
+
+        //        MessageBox.Show("Solved!");
+        //        Logger.Log("Puzzle successfully solved.", "INFO");
+        //    }
+        //    else
+        //    {
+        //        MessageBox.Show("No solution found.");
+        //        Logger.Log("Solve failed.", "ERROR");
+        //    }
+
+        //    // Re-enable buttons after solving is complete
+        //    btnGenerate.Enabled = true;
+        //    btnSolve.Enabled = true;
+        //}
+
         private async Task SolvePuzzleAsync()
         {
-            // Disable buttons
+            // Disable buttons during solving
             Button btnGenerate = (Button)sudokuPanel.Controls["btnGenerate"];
             Button btnSolve = (Button)sudokuPanel.Controls["btnSolve"];
             btnGenerate.Enabled = false;
@@ -378,16 +541,82 @@ namespace SudokuApp.Forms
             if (puzzle == null)
             {
                 MessageBox.Show("Generate a puzzle first.");
-                // Re-enable buttons if puzzle is not generated
                 btnGenerate.Enabled = true;
                 btnSolve.Enabled = true;
                 return;
             }
 
+            // Record the positions of any hint cells before resetting the puzzle board.
+            var hintPositions = new List<(int row, int col)>();
+            for (int i = 0; i < gridSize; i++)
+            {
+                for (int j = 0; j < gridSize; j++)
+                {
+                    SudokuCell cell = sudokuGrid.GetCell(i, j);
+                    if (cell.IsHint)
+                        hintPositions.Add((i, j));
+                }
+            }
+
+            // Capture player's input and record which cells were originally editable
+            int[,] userInputs = new int[gridSize, gridSize];
+            bool[,] wasEditable = new bool[gridSize, gridSize];
+            for (int i = 0; i < gridSize; i++)
+            {
+                for (int j = 0; j < gridSize; j++)
+                {
+                    SudokuCell cell = sudokuGrid.GetCell(i, j);
+                    userInputs[i, j] = cell.Value;
+                    wasEditable[i, j] = cell.IsEditable;
+                }
+            }
+
+            // Solve the puzzle asynchronously
             bool solved = await Task.Run(() => SudokuSolver.Solve(puzzle));
             if (solved)
             {
+                // Update the grid with the solved puzzle.
                 sudokuGrid.SetPuzzle(puzzle.Board);
+
+                // Reapply yellow highlight to all cells that were previously marked as hints.
+                foreach (var pos in hintPositions)
+                {
+                    SudokuCell hintCell = sudokuGrid.GetCell(pos.row, pos.col);
+                    hintCell.Highlight(Color.LightYellow);
+                    hintCell.IsHint = true;
+                }
+
+                // Highlight the cells that the user filled in (unless they are hints).
+                for (int i = 0; i < gridSize; i++)
+                {
+                    for (int j = 0; j < gridSize; j++)
+                    {
+                        // Only override if the cell was originally user-editable.
+                        if (wasEditable[i, j])
+                        {
+                            SudokuCell cell = sudokuGrid.GetCell(i, j);
+                            // Skip cells that are marked as hints.
+                            if (cell.IsHint)
+                                continue;
+
+                            int userVal = userInputs[i, j];
+                            int correctVal = puzzle.Board[i, j];
+                            // Only highlight if the user entered a value.
+                            if (userVal != 0)
+                            {
+                                if (userVal == correctVal)
+                                {
+                                    cell.Highlight(Color.LightGreen);  // Correct answer
+                                }
+                                else
+                                {
+                                    cell.Highlight(Color.LightCoral);   // Incorrect answer
+                                }
+                            }
+                        }
+                    }
+                }
+
                 MessageBox.Show("Solved!");
                 Logger.Log("Puzzle successfully solved.", "INFO");
             }
@@ -401,6 +630,8 @@ namespace SudokuApp.Forms
             btnGenerate.Enabled = true;
             btnSolve.Enabled = true;
         }
+
+
 
 
         private void ResetPuzzle()

@@ -72,6 +72,25 @@ namespace SudokuApp.CustomControls
             validateInput = true;
         }
 
+        //private void OnTextChanged()
+        //{
+        //    if (!validateInput) return;
+
+        //    if (int.TryParse(textBox.Text, out int number))
+        //    {
+        //        if (number < 1 || number > MaxValue)
+        //        {
+        //            MessageBox.Show($"Please enter a number between 1 and {MaxValue}.");
+        //            textBox.Text = "";
+        //        }
+        //    }
+        //    else if (!string.IsNullOrEmpty(textBox.Text))
+        //    {
+        //        MessageBox.Show("Only numbers are allowed.");
+        //        textBox.Text = "";
+        //    }
+        //}
+
         private void OnTextChanged()
         {
             if (!validateInput) return;
@@ -82,14 +101,35 @@ namespace SudokuApp.CustomControls
                 {
                     MessageBox.Show($"Please enter a number between 1 and {MaxValue}.");
                     textBox.Text = "";
+                    Value = 0;
+                }
+                else
+                {
+                    Value = number;
                 }
             }
             else if (!string.IsNullOrEmpty(textBox.Text))
             {
                 MessageBox.Show("Only numbers are allowed.");
                 textBox.Text = "";
+                Value = 0;
+            }
+            else
+            {
+                Value = 0;
             }
         }
+
+        public void Highlight(Color color)
+        {
+            this.BackColor = color;
+            // Also update the textbox background so it isn’t overwritten by ApplyPreFilledStyle
+            foreach (Control ctrl in this.Controls)
+            {
+                ctrl.BackColor = color;
+            }
+        }
+
 
         public void SetValueWithoutValidation(int number)
         {

@@ -52,7 +52,7 @@ namespace SudokuApp.Services
         //    return false;
         //}
 
-        // Main method to get a hint for the puzzle
+
         //public static bool GetHint(SudokuPuzzle puzzle, out int hintRow, out int hintCol, out int hintValue)
         //{
         //    hintRow = -1;
@@ -67,6 +67,7 @@ namespace SudokuApp.Services
         //    return false;
         // }
 
+        // Main method to get a hint for the puzzle
         public static bool GetHint(SudokuPuzzle puzzle, out int hintRow, out int hintCol, out int hintValue)
         {
             hintRow = -1;
@@ -184,6 +185,7 @@ namespace SudokuApp.Services
             }
         }
 
+        // Validation <3
         private static bool IsValid(SudokuPuzzle puzzle)
         {
             int size = puzzle.Size;
@@ -219,9 +221,5 @@ namespace SudokuApp.Services
             }
             return true;
         }
-
-
-
-
     }
 }
