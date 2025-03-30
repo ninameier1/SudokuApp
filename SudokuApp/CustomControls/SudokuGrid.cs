@@ -16,7 +16,7 @@ namespace SudokuApp.CustomControls
         {
             this.gridSize = gridSize;
             // Use a default cell size (will be recalculated on resize/update)
-            currentCellSize = 40;
+            currentCellSize = 64;
             this.Size = new Size(gridSize * currentCellSize, gridSize * currentCellSize);
             this.DoubleBuffered = true; // reduce flicker
             this.BorderStyle = BorderStyle.None;
@@ -57,8 +57,8 @@ namespace SudokuApp.CustomControls
             gridSize = newSize;
             // Recalc cell size based on the current control size
             currentCellSize = Math.Min(this.Width, this.Height) / gridSize;
-            if (currentCellSize < 20)
-                currentCellSize = 20; // enforce a minimum size
+            if (currentCellSize < 36)
+                currentCellSize = 36; // enforce a minimum size
 
             CreateCells();
             // Update overall control size
@@ -109,35 +109,7 @@ namespace SudokuApp.CustomControls
             }
         }
 
-        //public void SetPuzzle(int[,] puzzle)
-        //{
-        //    if (puzzle.GetLength(0) != gridSize || puzzle.GetLength(1) != gridSize)
-        //        throw new ArgumentException("Puzzle size does not match the current grid size.");
-
-        //    for (int i = 0; i < gridSize; i++)
-        //    {
-        //        for (int j = 0; j < gridSize; j++)
-        //        {
-        //            SudokuCell cell = cells[i, j];
-        //            int value = puzzle[i, j];
-
-        //            cell.Value = value;
-        //            if (value != 0)
-        //            {
-        //                cell.SetText(value.ToString());
-        //                cell.IsEditable = false;
-        //                cell.IsPreFilled = true;
-        //            }
-        //            else
-        //            {
-        //                cell.SetText("");
-        //                cell.IsEditable = true;
-        //                cell.IsPreFilled = false;
-        //            }
-        //            cell.ApplyPreFilledStyle();
-        //        }
-        //    }
-        //}
+    
 
         // Returns the cell at the specified row and column.
         public SudokuCell GetCell(int row, int col)
@@ -160,6 +132,7 @@ namespace SudokuApp.CustomControls
                 cell.SetText(value.ToString());
                 cell.IsHint = true;
                 cell.Highlight(Color.LightYellow);
+                cell.IsEditable = false; // Make the hint uneditable
             }
         }
 

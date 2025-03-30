@@ -36,36 +36,6 @@ namespace SudokuApp.Services
             return false;
         }
 
-        //private static bool SolveRecursive(SudokuPuzzle puzzle)
-        //{
-        //    // Find the unassigned cell with the fewest candidates
-        //    if (!FindUnassignedCell(puzzle, out int row, out int col))
-        //        return true; // puzzle solved
-
-        //    foreach (int num in GetCandidates(puzzle, row, col))
-        //    {
-        //        puzzle.Board[row, col] = num;
-        //        if (SolveRecursive(puzzle))
-        //            return true;
-        //        puzzle.Board[row, col] = 0;
-        //    }
-        //    return false;
-        //}
-
-
-        //public static bool GetHint(SudokuPuzzle puzzle, out int hintRow, out int hintCol, out int hintValue)
-        //{
-        //    hintRow = -1;
-        //    hintCol = -1;
-        //    hintValue = 0;
-
-        //    // Solve the puzzle but stop after filling in one cell
-        //    if (GetHintRecursive(puzzle, out hintRow, out hintCol, out hintValue))
-        //    {
-        //        return true;
-        //    }
-        //    return false;
-        // }
 
         // Main method to get a hint for the puzzle
         public static bool GetHint(SudokuPuzzle puzzle, out int hintRow, out int hintCol, out int hintValue)

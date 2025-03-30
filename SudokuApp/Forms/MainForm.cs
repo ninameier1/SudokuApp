@@ -56,6 +56,7 @@ namespace SudokuApp.Forms
                 Text = "Start Sudoku",
                 Width = 150,
                 Height = 50,
+                BackColor = Color.Lavender,
                 Left = (this.Width - 150) / 2,
                 Top = (this.Height - 50) / 2,
                 Name = "startGameButton"
@@ -69,6 +70,7 @@ namespace SudokuApp.Forms
                 Text = "Login",
                 Width = 150,
                 Height = 50,
+                BackColor = Color.Lavender,
                 Left = (this.Width - 150) / 2,
                 Top = startGameButton.Bottom + 10,
                 Name = "loginButton"
@@ -96,49 +98,41 @@ namespace SudokuApp.Forms
             sudokuPanel.Visible = true;
         }
 
+        private void BtnGoToLogin_Click(object sender, EventArgs e)
+        {
+            // Hide Sudoku page
+            if (sudokuPanel != null)
+                sudokuPanel.Visible = false;
+
+            // Show Login page
+            ShowLoginPage();
+        }
+
+
         private void InitializeSudokuPage()
         {
             sudokuPanel = new Panel
             {
                 Dock = DockStyle.Fill,
-                BackColor = Color.LightGray
+                BackColor = Color.LightCyan
             };
             this.Controls.Add(sudokuPanel);
 
             // Initialize the SudokuGrid control and pass gridSize to it
             sudokuGrid = new SudokuGrid(gridSize)
             {
-                Location = new Point(10, 10)
+                Location = new Point(190, 10)
             };
             sudokuPanel.Controls.Add(sudokuGrid);
-
-            // Add reset button
-            resetButton = new Button
-            {
-                Text = "Reset",
-                Location = new Point(10, sudokuGrid.Bottom + 10),
-                Name = "resetButton"
-            };
-            resetButton.Click += ResetButton_Click;
-            sudokuPanel.Controls.Add(resetButton);
-
-            // Add hint button
-            hintButton = new Button
-            {
-                Text = "Show Hint",
-                Location = new Point(resetButton.Right + 10, sudokuGrid.Bottom + 10),
-                Name = "hintButton"
-            };
-            hintButton.Click += HintButton_Click;
-            sudokuPanel.Controls.Add(hintButton);
-
 
             // ComboBox for puzzle size
             ComboBox cmbSize = new ComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
-                Left = 10,
-                Top = hintButton.Bottom + 10,
+                BackColor = Color.Lavender,
+                Width = 100,
+                Height = 30,
+                Location = new Point(sudokuGrid.Left, sudokuGrid.Bottom + 10),
                 Name = "cmbSize"
             };
             cmbSize.Items.AddRange(new object[] { "4x4", "9x9", "16x16" });
@@ -159,32 +153,82 @@ namespace SudokuApp.Forms
             Button btnGenerate = new Button
             {
                 Text = "Generate",
+                Width = 120,
+                Height = 30,
                 Location = new Point(cmbSize.Right + 10, cmbSize.Top),
+                BackColor = Color.Lavender,
                 Name = "btnGenerate"
             };
             btnGenerate.Click += (s, e) => GeneratePuzzle();
             sudokuPanel.Controls.Add(btnGenerate);
 
+            // Add reset button
+            resetButton = new Button
+            {
+                Text = "Reset",
+                Width = 100,
+                Height = 30,
+                Location = new Point(btnGenerate.Right + 10, btnGenerate.Top),
+                BackColor = Color.Lavender,
+                Name = "resetButton"
+            };
+            resetButton.Click += ResetButton_Click;
+            sudokuPanel.Controls.Add(resetButton);
+
+
+            // Add hint button
+            hintButton = new Button
+            {
+                Text = "Show Hint",
+                Width = 100,
+                Height = 30,
+                Location = new Point(resetButton.Right + 10, sudokuGrid.Bottom + 10),
+                BackColor = Color.Lavender,
+                Name = "hintButton"
+            };
+            hintButton.Click += HintButton_Click;
+            sudokuPanel.Controls.Add(hintButton);
+
+            // Add hint counter
+            lblHintCounter = new Label
+            {
+                Text = "Hints: 0/5",
+                AutoSize = true,
+                Left = hintButton.Left,
+                Top = hintButton.Bottom + 2,
+                Name = "lblHintCounter"
+            };
+            sudokuPanel.Controls.Add(lblHintCounter);
+
+
             // Button for solving the puzzle
             Button btnSolve = new Button
             {
                 Text = "Solve",
-                Location = new Point(btnGenerate.Right + 10, cmbSize.Top),
+                Width = 100,
+                Height = 30,
+                Location = new Point(sudokuGrid.Right - 100, hintButton.Top),
+                BackColor = Color.Lavender,
                 Name = "btnSolve"
             };
             btnSolve.Click += async (s, e) => await SolvePuzzleAsync();
             sudokuPanel.Controls.Add(btnSolve);
 
-            // Add hint counter
-            lblHintCounter = new Label
+
+
+            // Add login button on Sudoku page
+            Button btnGoToLogin = new Button
             {
-                Text = "Hints used: 0 / 5",
-                AutoSize = true,
-                Left = btnSolve.Right + 10,
-                Top = cmbSize.Top,
-                Name = "lblHintCounter"
+                Text = "Go to Login",
+                Width = 150,
+                Height = 50,
+                BackColor = Color.Lavender,
+                Left = sudokuGrid.Right + 10,
+                Top = sudokuGrid.Top, 
+                Name = "btnGoToLogin"
             };
-            sudokuPanel.Controls.Add(lblHintCounter);
+            btnGoToLogin.Click += BtnGoToLogin_Click;
+            sudokuPanel.Controls.Add(btnGoToLogin);
         }
 
         private void LoginButton_Click(object sender, EventArgs e)
@@ -211,7 +255,7 @@ namespace SudokuApp.Forms
             loginPanel = new Panel
             {
                 Dock = DockStyle.Fill,
-                BackColor = Color.Beige
+                BackColor = Color.LightBlue
             };
             this.Controls.Add(loginPanel);
 
@@ -219,30 +263,32 @@ namespace SudokuApp.Forms
             Label usernameLabel = new Label
             {
                 Text = "Username:",
-                Left = 10,
-                Top = 10
+                Left = (this.Width - 200) / 2,
+                Top = (this.Height - 100) / 2,
             };
             loginPanel.Controls.Add(usernameLabel);
 
             TextBox usernameTextbox = new TextBox
             {
-                Left = 10,
-                Top = 30
+                Width = 155,
+                Left = (this.Width - 200) / 2,
+                Top = usernameLabel.Bottom + 1,
             };
             loginPanel.Controls.Add(usernameTextbox);
 
             Label passwordLabel = new Label
             {
                 Text = "Password:",
-                Left = 10,
-                Top = 60
+                Left = (this.Width - 200) / 2,
+                Top = usernameTextbox.Bottom + 10,
             };
             loginPanel.Controls.Add(passwordLabel);
 
             TextBox passwordTextbox = new TextBox
             {
-                Left = 10,
-                Top = 80,
+                Width = 155,
+                Left = (this.Width - 200) / 2,
+                Top = passwordLabel.Bottom + 1,
                 PasswordChar = '*'
             };
             loginPanel.Controls.Add(passwordTextbox);
@@ -250,8 +296,10 @@ namespace SudokuApp.Forms
             Button loginButton = new Button
             {
                 Text = "Login",
-                Left = 10,
-                Top = 110
+                Width = 75,
+                BackColor = Color.Lavender,
+                Left = (this.Width - 200) / 2,
+                Top = passwordTextbox.Bottom + 10,
             };
             loginButton.Click += (s, e) => LoginUser(usernameTextbox.Text, passwordTextbox.Text);
             loginPanel.Controls.Add(loginButton);
@@ -259,8 +307,10 @@ namespace SudokuApp.Forms
             Button cancelButton = new Button
             {
                 Text = "Cancel",
-                Left = 90,
-                Top = 110
+                Width = 75,
+                BackColor = Color.Lavender,
+                Left = loginButton.Right + 5,
+                Top = passwordTextbox.Bottom + 10,
             };
             cancelButton.Click += (s, e) => CancelLogin();
             loginPanel.Controls.Add(cancelButton);
@@ -292,28 +342,6 @@ namespace SudokuApp.Forms
             ResetPuzzle();
         }
 
-        //private void HintButton_Click(object sender, EventArgs e)
-        //{
-        //    // Make sure the puzzle has been generated
-        //    if (puzzle == null)
-        //    {
-        //        MessageBox.Show("Please generate a puzzle first.");
-        //        return;
-        //    }
-
-        //    int hintRow, hintCol, hintValue;
-
-        //    // Get a hint from the solver 
-        //    if (SudokuSolver.GetHint(puzzle, out hintRow, out hintCol, out hintValue))
-        //    {
-        //        // Show the hint for the identified cell
-        //        sudokuGrid.ShowHint(hintRow, hintCol, hintValue);
-        //    }
-        //    else
-        //    {
-        //        MessageBox.Show("No hint available.");
-        //    }
-        //}
 
         private void HintButton_Click(object sender, EventArgs e)
         {
@@ -335,7 +363,7 @@ namespace SudokuApp.Forms
             {
                 sudokuGrid.ShowHint(hintRow, hintCol, hintValue);
                 hintCount++;
-                lblHintCounter.Text = $"Hints used: {hintCount} / {maxHints}";
+                lblHintCounter.Text = $"Hints: {hintCount}/{maxHints}";
             }
             else
             {
@@ -359,7 +387,7 @@ namespace SudokuApp.Forms
             hintCount = 0;
             if (lblHintCounter != null)
             {
-                lblHintCounter.Text = $"Hints used: {hintCount} / {maxHints}";
+                lblHintCounter.Text = $"Hints: {hintCount}/{maxHints}";
             }
 
             // Cancel the previous task if one is running
@@ -415,120 +443,6 @@ namespace SudokuApp.Forms
         }
 
 
-
-
-
-        //private async Task SolvePuzzleAsync()
-        //{
-        //    // Disable buttons
-        //    Button btnGenerate = (Button)sudokuPanel.Controls["btnGenerate"];
-        //    Button btnSolve = (Button)sudokuPanel.Controls["btnSolve"];
-        //    btnGenerate.Enabled = false;
-        //    btnSolve.Enabled = false;
-
-        //    if (puzzle == null)
-        //    {
-        //        MessageBox.Show("Generate a puzzle first.");
-        //        // Re-enable buttons if puzzle is not generated
-        //        btnGenerate.Enabled = true;
-        //        btnSolve.Enabled = true;
-        //        return;
-        //    }
-
-        //    bool solved = await Task.Run(() => SudokuSolver.Solve(puzzle));
-        //    if (solved)
-        //    {
-        //        sudokuGrid.SetPuzzle(puzzle.Board);
-        //        MessageBox.Show("Solved!");
-        //        Logger.Log("Puzzle successfully solved.", "INFO");
-        //    }
-        //    else
-        //    {
-        //        MessageBox.Show("No solution found.");
-        //        Logger.Log("Solve failed.", "ERROR");
-        //    }
-
-        //    // Re-enable buttons after solving is complete
-        //    btnGenerate.Enabled = true;
-        //    btnSolve.Enabled = true;
-        //}
-
-        //private async Task SolvePuzzleAsync()
-        //{
-        //    // Disable buttons during solving
-        //    Button btnGenerate = (Button)sudokuPanel.Controls["btnGenerate"];
-        //    Button btnSolve = (Button)sudokuPanel.Controls["btnSolve"];
-        //    btnGenerate.Enabled = false;
-        //    btnSolve.Enabled = false;
-
-        //    if (puzzle == null)
-        //    {
-        //        MessageBox.Show("Generate a puzzle first.");
-        //        btnGenerate.Enabled = true;
-        //        btnSolve.Enabled = true;
-        //        return;
-        //    }
-
-        //    // Capture player's input and record which cells were originally editable
-        //    int[,] userInputs = new int[gridSize, gridSize];
-        //    bool[,] wasEditable = new bool[gridSize, gridSize];
-        //    for (int i = 0; i < gridSize; i++)
-        //    {
-        //        for (int j = 0; j < gridSize; j++)
-        //        {
-        //            SudokuCell cell = sudokuGrid.GetCell(i, j);
-        //            userInputs[i, j] = cell.Value;
-        //            wasEditable[i, j] = cell.IsEditable;
-        //        }
-        //    }
-
-        //    // Solve the puzzle asynchronously
-        //    bool solved = await Task.Run(() => SudokuSolver.Solve(puzzle));
-        //    if (solved)
-        //    {
-        //        // Update the grid with the solved puzzle
-        //        sudokuGrid.SetPuzzle(puzzle.Board);
-
-        //        // Highlight the cells that the user filled in
-        //        for (int i = 0; i < gridSize; i++)
-        //        {
-        //            for (int j = 0; j < gridSize; j++)
-        //            {
-        //                // Only override if the cell was originally user editable.
-        //                if (wasEditable[i, j])
-        //                {
-        //                    SudokuCell cell = sudokuGrid.GetCell(i, j);
-        //                    int userVal = userInputs[i, j];
-        //                    int correctVal = puzzle.Board[i, j];
-        //                    // Only highlight if the user had entered a value
-        //                    if (userVal != 0)
-        //                    {
-        //                        if (userVal == correctVal)
-        //                        {
-        //                            cell.Highlight(Color.LightGreen); // Correct answer
-        //                        }
-        //                        else
-        //                        {
-        //                            cell.Highlight(Color.LightCoral);  // Incorrect answer
-        //                        }
-        //                    }
-        //                }
-        //            }
-        //        }
-
-        //        MessageBox.Show("Solved!");
-        //        Logger.Log("Puzzle successfully solved.", "INFO");
-        //    }
-        //    else
-        //    {
-        //        MessageBox.Show("No solution found.");
-        //        Logger.Log("Solve failed.", "ERROR");
-        //    }
-
-        //    // Re-enable buttons after solving is complete
-        //    btnGenerate.Enabled = true;
-        //    btnSolve.Enabled = true;
-        //}
 
         private async Task SolvePuzzleAsync()
         {

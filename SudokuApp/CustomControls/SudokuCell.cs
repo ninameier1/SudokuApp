@@ -49,8 +49,8 @@ namespace SudokuApp.CustomControls
             this.Padding = new Padding(0);
             this.Margin = new Padding(0);
 
-            // Set the font size to 60% of the cell size
-            float fontSize = cellSize * 0.6f;
+            // Set the font size to 65% of the cell size otherwise there's like a small white line for some reason
+            float fontSize = cellSize * 0.65f;
             textBox.Font = new Font("Arial", fontSize);
 
             textBox.TextChanged += (sender, e) => OnTextChanged();
@@ -72,24 +72,6 @@ namespace SudokuApp.CustomControls
             validateInput = true;
         }
 
-        //private void OnTextChanged()
-        //{
-        //    if (!validateInput) return;
-
-        //    if (int.TryParse(textBox.Text, out int number))
-        //    {
-        //        if (number < 1 || number > MaxValue)
-        //        {
-        //            MessageBox.Show($"Please enter a number between 1 and {MaxValue}.");
-        //            textBox.Text = "";
-        //        }
-        //    }
-        //    else if (!string.IsNullOrEmpty(textBox.Text))
-        //    {
-        //        MessageBox.Show("Only numbers are allowed.");
-        //        textBox.Text = "";
-        //    }
-        //}
 
         private void OnTextChanged()
         {
