@@ -16,6 +16,12 @@ namespace SudokuApp.Services
 
         private static bool SolveRecursive(SudokuPuzzle puzzle)
         {
+            // Check if the puzzle is valid before attempting to solve
+            if (!IsValid(puzzle))
+            {
+                return false; // Puzzle is invalid, cannot solve
+            }
+
             // Find the unassigned cell with the fewest candidates
             if (!FindUnassignedCell(puzzle, out int row, out int col))
                 return true; // puzzle solved
@@ -30,7 +36,37 @@ namespace SudokuApp.Services
             return false;
         }
 
+        //private static bool SolveRecursive(SudokuPuzzle puzzle)
+        //{
+        //    // Find the unassigned cell with the fewest candidates
+        //    if (!FindUnassignedCell(puzzle, out int row, out int col))
+        //        return true; // puzzle solved
+
+        //    foreach (int num in GetCandidates(puzzle, row, col))
+        //    {
+        //        puzzle.Board[row, col] = num;
+        //        if (SolveRecursive(puzzle))
+        //            return true;
+        //        puzzle.Board[row, col] = 0;
+        //    }
+        //    return false;
+        //}
+
         // Main method to get a hint for the puzzle
+        //public static bool GetHint(SudokuPuzzle puzzle, out int hintRow, out int hintCol, out int hintValue)
+        //{
+        //    hintRow = -1;
+        //    hintCol = -1;
+        //    hintValue = 0;
+
+        //    // Solve the puzzle but stop after filling in one cell
+        //    if (GetHintRecursive(puzzle, out hintRow, out hintCol, out hintValue))
+        //    {
+        //        return true;
+        //    }
+        //    return false;
+        // }
+
         public static bool GetHint(SudokuPuzzle puzzle, out int hintRow, out int hintCol, out int hintValue)
         {
             hintRow = -1;
@@ -40,12 +76,19 @@ namespace SudokuApp.Services
             // Solve the puzzle but stop after filling in one cell
             if (GetHintRecursive(puzzle, out hintRow, out hintCol, out hintValue))
             {
+                // After assigning a hint, check if the puzzle is still valid
+                if (!IsValid(puzzle))
+                {
+                    // If it's invalid, revert the hint and return false
+                    puzzle.Board[hintRow, hintCol] = 0;
+                    return false;
+                }
                 return true;
             }
             return false;
         }
 
-        // Recursive backtracking function to find a hint
+
         private static bool GetHintRecursive(SudokuPuzzle puzzle, out int hintRow, out int hintCol, out int hintValue)
         {
             // Find the first unassigned cell
@@ -59,16 +102,24 @@ namespace SudokuApp.Services
             foreach (int num in GetCandidates(puzzle, hintRow, hintCol))
             {
                 puzzle.Board[hintRow, hintCol] = num; // Tentatively assign this number
-                                                      // Return the first valid number as a hint
-                hintValue = num;
-                return true; // We found a valid hint, return it
+
+                // Check if the puzzle is still valid after assigning the hint
+                if (IsValid(puzzle))
+                {
+                    hintValue = num;
+                    return true; // We found a valid hint, return it
+                }
+
+                // Reset if invalid
+                puzzle.Board[hintRow, hintCol] = 0;
             }
 
-            // If no valid number found, reset the cell and return false
-            puzzle.Board[hintRow, hintCol] = 0;
+            // Ensure 'hintValue' is assigned before returning false
             hintValue = 0;
-            return false;
+            return false; // No valid hint found
         }
+
+
 
         // Helper methods to find unassigned cell and get its candidate values:
         private static bool FindUnassignedCell(SudokuPuzzle puzzle, out int minRow, out int minCol)
@@ -132,6 +183,45 @@ namespace SudokuApp.Services
                     yield return num;
             }
         }
+
+        private static bool IsValid(SudokuPuzzle puzzle)
+        {
+            int size = puzzle.Size;
+
+            // Check rows and columns for duplicates
+            for (int i = 0; i < size; i++)
+            {
+                HashSet<int> rowSet = new HashSet<int>();
+                HashSet<int> colSet = new HashSet<int>();
+                for (int j = 0; j < size; j++)
+                {
+                    if (puzzle.Board[i, j] != 0 && !rowSet.Add(puzzle.Board[i, j])) return false;
+                    if (puzzle.Board[j, i] != 0 && !colSet.Add(puzzle.Board[j, i])) return false;
+                }
+            }
+
+            // Check subgrids for duplicates
+            int sqrt = (int)Math.Sqrt(size);
+            for (int i = 0; i < size; i += sqrt)
+            {
+                for (int j = 0; j < size; j += sqrt)
+                {
+                    HashSet<int> subgridSet = new HashSet<int>();
+                    for (int k = 0; k < sqrt; k++)
+                    {
+                        for (int l = 0; l < sqrt; l++)
+                        {
+                            int value = puzzle.Board[i + k, j + l];
+                            if (value != 0 && !subgridSet.Add(value)) return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+
+
 
     }
 }
