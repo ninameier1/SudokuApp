@@ -111,5 +111,10 @@ namespace SudokuApp.CustomControls
                 textBox.ForeColor = Color.Black;
             }
         }
+
+        private void SudokuCell_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }

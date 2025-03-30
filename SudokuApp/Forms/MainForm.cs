@@ -145,7 +145,7 @@ namespace SudokuApp.Forms
                 // Reset puzzle and update the grid size.
                 sudokuGrid.UpdateGridSize(gridSize);
                 ResetPuzzle();
-                
+
             };
             sudokuPanel.Controls.Add(cmbSize);
 
@@ -398,6 +398,11 @@ namespace SudokuApp.Forms
                     btnSolve.Top = cmbSize.Top;
                 }
             }
+        }
+
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }
