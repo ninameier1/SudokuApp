@@ -6,7 +6,16 @@ using System.Threading.Tasks;
 
 namespace SudokuApp.Models
 {
-    class User
+    public class User
     {
+        public string Username { get; set; }
+        public string Password { get; set; }
+        public UserSettings Settings { get; set; } = new UserSettings();
     }
+
+    public class UserSettings
+    {
+        public string Difficulty { get; set; } = "9x9";
+    }
+
 }

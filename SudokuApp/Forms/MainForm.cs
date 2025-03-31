@@ -16,6 +16,7 @@ namespace SudokuApp.Forms
         private Panel startPanel;
         private Panel sudokuPanel;
         private Panel loginPanel;
+        private Panel registerPanel; // New registration panel
         private SudokuGrid sudokuGrid;
         private Button resetButton;
         private Button hintButton;
@@ -24,7 +25,6 @@ namespace SudokuApp.Forms
         private int hintCount = 0;
         private const int maxHints = 5;
         private Label lblHintCounter;
-
 
         public MainForm()
         {
@@ -67,7 +67,7 @@ namespace SudokuApp.Forms
             // Add a login button
             Button loginButton = new Button
             {
-                Text = "Login",
+                Text = "Login/Register",
                 Width = 150,
                 Height = 50,
                 BackColor = Color.Lavender,
@@ -90,6 +90,10 @@ namespace SudokuApp.Forms
             if (startPanel != null)
                 startPanel.Visible = false;
 
+            // Hide login and register panels if visible
+            if (loginPanel != null) loginPanel.Visible = false;
+            if (registerPanel != null) registerPanel.Visible = false;
+
             // Initialize and show the Sudoku game page if not already created
             if (sudokuPanel == null)
             {
@@ -107,7 +111,6 @@ namespace SudokuApp.Forms
             // Show Login page
             ShowLoginPage();
         }
-
 
         private void InitializeSudokuPage()
         {
@@ -145,7 +148,6 @@ namespace SudokuApp.Forms
                 // Reset puzzle and update the grid size.
                 sudokuGrid.UpdateGridSize(gridSize);
                 ResetPuzzle();
-                
             };
             sudokuPanel.Controls.Add(cmbSize);
 
@@ -175,7 +177,6 @@ namespace SudokuApp.Forms
             resetButton.Click += ResetButton_Click;
             sudokuPanel.Controls.Add(resetButton);
 
-
             // Add hint button
             hintButton = new Button
             {
@@ -200,7 +201,6 @@ namespace SudokuApp.Forms
             };
             sudokuPanel.Controls.Add(lblHintCounter);
 
-
             // Button for solving the puzzle
             Button btnSolve = new Button
             {
@@ -214,21 +214,37 @@ namespace SudokuApp.Forms
             btnSolve.Click += async (s, e) => await SolvePuzzleAsync();
             sudokuPanel.Controls.Add(btnSolve);
 
-
-
-            // Add login button on Sudoku page
-            Button btnGoToLogin = new Button
+            if (string.IsNullOrEmpty(_username))
             {
-                Text = "Go to Login",
-                Width = 150,
-                Height = 50,
-                BackColor = Color.Lavender,
-                Left = sudokuGrid.Right + 10,
-                Top = sudokuGrid.Top, 
-                Name = "btnGoToLogin"
-            };
-            btnGoToLogin.Click += BtnGoToLogin_Click;
-            sudokuPanel.Controls.Add(btnGoToLogin);
+                // User is not logged in, show the "Go to Login" button
+                Button btnGoToLogin = new Button
+                {
+                    Text = "Go to Login",
+                    Width = 150,
+                    Height = 50,
+                    BackColor = Color.Lavender,
+                    Left = sudokuGrid.Right + 10,
+                    Top = sudokuGrid.Top,
+                    Name = "btnGoToLogin"
+                };
+                btnGoToLogin.Click += BtnGoToLogin_Click;
+                sudokuPanel.Controls.Add(btnGoToLogin);
+            }
+            else
+            {
+                // User is logged in, show a label with the username
+                Label lblUser = new Label
+                {
+                    Text = $"Logged in as {_username}",
+                    AutoSize = true,
+                    BackColor = Color.LightGray,
+                    Left = sudokuGrid.Right + 10,
+                    Top = sudokuGrid.Top,
+                    Name = "lblUser"
+                };
+                sudokuPanel.Controls.Add(lblUser);
+            }
+
         }
 
         private void LoginButton_Click(object sender, EventArgs e)
@@ -238,9 +254,10 @@ namespace SudokuApp.Forms
 
         private void ShowLoginPage()
         {
-            // Hide the start page
-            if (startPanel != null)
-                startPanel.Visible = false;
+            // Hide other panels
+            if (startPanel != null) startPanel.Visible = false;
+            if (sudokuPanel != null) sudokuPanel.Visible = false;
+            if (registerPanel != null) registerPanel.Visible = false;
 
             // Initialize and show the login page if not already created
             if (loginPanel == null)
@@ -304,16 +321,137 @@ namespace SudokuApp.Forms
             loginButton.Click += (s, e) => LoginUser(usernameTextbox.Text, passwordTextbox.Text);
             loginPanel.Controls.Add(loginButton);
 
-            Button cancelButton = new Button
+            // Add a Register button that shows the registration page
+            Button registerButton = new Button
             {
-                Text = "Cancel",
+                Text = "Register",
                 Width = 75,
                 BackColor = Color.Lavender,
                 Left = loginButton.Right + 5,
                 Top = passwordTextbox.Bottom + 10,
             };
+            registerButton.Click += (s, e) => ShowRegisterPage();
+            loginPanel.Controls.Add(registerButton);
+
+            Button cancelButton = new Button
+            {
+                Text = "Cancel",
+                Width = 75,
+                BackColor = Color.Lavender,
+                Left = registerButton.Right + 5,
+                Top = passwordTextbox.Bottom + 10,
+            };
             cancelButton.Click += (s, e) => CancelLogin();
             loginPanel.Controls.Add(cancelButton);
+        }
+
+        private void ShowRegisterPage()
+        {
+            // Hide the login panel if it's visible
+            if (loginPanel != null)
+                loginPanel.Visible = false;
+
+            // Initialize the register page if it hasn't been created
+            if (registerPanel == null)
+            {
+                InitializeRegisterPage();
+            }
+            registerPanel.Visible = true;
+        }
+
+        private void InitializeRegisterPage()
+        {
+            registerPanel = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.LightGreen
+            };
+            this.Controls.Add(registerPanel);
+
+            // Add registration controls
+            Label regLabel = new Label
+            {
+                Text = "Register New Account",
+                Font = new Font("Arial", 14, FontStyle.Bold),
+                AutoSize = true,
+                Left = (this.Width - 200) / 2,
+                Top = (this.Height - 150) / 2 - 30
+            };
+            registerPanel.Controls.Add(regLabel);
+
+            Label usernameLabel = new Label
+            {
+                Text = "Username:",
+                Left = (this.Width - 200) / 2,
+                Top = regLabel.Bottom + 10,
+            };
+            registerPanel.Controls.Add(usernameLabel);
+
+            TextBox usernameTextbox = new TextBox
+            {
+                Width = 155,
+                Left = (this.Width - 200) / 2,
+                Top = usernameLabel.Bottom + 1,
+            };
+            registerPanel.Controls.Add(usernameTextbox);
+
+            Label passwordLabel = new Label
+            {
+                Text = "Password:",
+                Left = (this.Width - 200) / 2,
+                Top = usernameTextbox.Bottom + 10,
+            };
+            registerPanel.Controls.Add(passwordLabel);
+
+            TextBox passwordTextbox = new TextBox
+            {
+                Width = 155,
+                Left = (this.Width - 200) / 2,
+                Top = passwordLabel.Bottom + 1,
+                PasswordChar = '*'
+            };
+            registerPanel.Controls.Add(passwordTextbox);
+
+            Button registerButton = new Button
+            {
+                Text = "Register",
+                Width = 75,
+                BackColor = Color.Lavender,
+                Left = (this.Width - 200) / 2,
+                Top = passwordTextbox.Bottom + 10,
+            };
+            registerButton.Click += (s, e) =>
+            {
+                // Attempt to register the user
+                if (UserManager.Register(usernameTextbox.Text, passwordTextbox.Text))
+                {
+                    MessageBox.Show("Registration successful! Please log in.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    // After successful registration, hide the register panel and show the login page
+                    registerPanel.Visible = false;
+                    ShowLoginPage();
+                }
+                else
+                {
+                    MessageBox.Show("Username already taken. Please choose a different one.", "Registration Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            };
+            registerPanel.Controls.Add(registerButton);
+
+            Button cancelButton = new Button
+            {
+                Text = "Cancel",
+                Width = 75,
+                BackColor = Color.Lavender,
+                Left = registerButton.Right + 5,
+                Top = passwordTextbox.Bottom + 10,
+            };
+            cancelButton.Click += (s, e) =>
+            {
+                // Hide registration panel and return to login page
+                registerPanel.Visible = false;
+                ShowLoginPage();
+            };
+            registerPanel.Controls.Add(cancelButton);
         }
 
         private void LoginUser(string username, string password)
@@ -342,7 +480,6 @@ namespace SudokuApp.Forms
             ResetPuzzle();
         }
 
-
         private void HintButton_Click(object sender, EventArgs e)
         {
             if (puzzle == null)
@@ -370,10 +507,6 @@ namespace SudokuApp.Forms
                 MessageBox.Show("No hint available.");
             }
         }
-
-
-
-
 
         private void GeneratePuzzle()
         {
@@ -441,8 +574,6 @@ namespace SudokuApp.Forms
                 }
             });
         }
-
-
 
         private async Task SolvePuzzleAsync()
         {
@@ -544,9 +675,6 @@ namespace SudokuApp.Forms
             btnGenerate.Enabled = true;
             btnSolve.Enabled = true;
         }
-
-
-
 
         private void ResetPuzzle()
         {
