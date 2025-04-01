@@ -20,16 +20,13 @@ namespace SudokuApp.Services
             SudokuPuzzle puzzle = new SudokuPuzzle(size);
 
             // Try to fill the board using a backtracking approach. If it fails, throw an exception
-            if (!FillBoard(puzzle, 0, 0, cancellationToken))
+            if (!FillBoard(puzzle, cancellationToken))
             {
                 throw new Exception("Unable to generate board.");
             }
 
             // Generate a random number to vary the difficulty of the puzzle
             int variant = rand.Next(12);
-
-            //// Calculate how many cells to remove, making the puzzle more challenging
-            //int removeCount = (size * size) / 2 + variant;
 
             // Determine total cells on the board
             int totalCells = size * size;
@@ -68,46 +65,107 @@ namespace SudokuApp.Services
             return puzzle;
         }
 
-        // Recursive method to fill the Sudoku board using backtracking
-        private static bool FillBoard(SudokuPuzzle puzzle, int row, int col, CancellationToken cancellationToken)
+        //// Recursive method to fill the Sudoku board using backtracking
+        //private static bool FillBoard(SudokuPuzzle puzzle, int row, int col, CancellationToken cancellationToken)
+        //{
+        //    int size = puzzle.Size;
+
+        //    // If we reached the last row, the board is successfully filled
+        //    if (row == size)
+        //        return true;
+
+        //    // Calculate the next row and column to move to
+        //    int nextRow = col == size - 1 ? row + 1 : row;
+        //    int nextCol = col == size - 1 ? 0 : col + 1;
+
+        //    // Get a shuffled array of possible numbers for the current cell
+        //    int[] numbers = GetShuffledNumbers(size);
+
+        //    // Try placing each number in the current cell
+        //    foreach (int num in numbers)
+        //    {
+        //        // If the number is valid in this position, set it
+        //        if (IsValid(puzzle, row, col, num))
+        //        {
+        //            puzzle.Board[row, col] = num;
+
+        //            // Recursively try to fill the next cell
+        //            if (FillBoard(puzzle, nextRow, nextCol, cancellationToken))
+        //                return true;
+        //        }
+
+        //        // Check for cancellation
+        //        if (cancellationToken.IsCancellationRequested)
+        //        {
+        //            return false;
+        //        }
+        //    }
+
+        //    // If no valid number can be placed, backtrack and reset the current cell
+        //    puzzle.Board[row, col] = 0;
+        //    return false;
+        //}
+
+        private static bool FillBoard(SudokuPuzzle puzzle, CancellationToken cancellationToken)
         {
-            int size = puzzle.Size;
+            cancellationToken.ThrowIfCancellationRequested(); //  Check cancellation before each step
 
-            // If we reached the last row, the board is successfully filled
-            if (row == size)
-                return true;
+            var bestCell = FindBestCell(puzzle);
+            if (bestCell == null)
+                return true; // Board is filled
 
-            // Calculate the next row and column to move to
-            int nextRow = col == size - 1 ? row + 1 : row;
-            int nextCol = col == size - 1 ? 0 : col + 1;
+            int row = bestCell.Value.row;
+            int col = bestCell.Value.col;
 
-            // Get a shuffled array of possible numbers for the current cell
-            int[] numbers = GetShuffledNumbers(size);
+            int[] numbers = GetShuffledNumbers(puzzle.Size);
 
-            // Try placing each number in the current cell
             foreach (int num in numbers)
             {
-                // If the number is valid in this position, set it
                 if (IsValid(puzzle, row, col, num))
                 {
                     puzzle.Board[row, col] = num;
 
-                    // Recursively try to fill the next cell
-                    if (FillBoard(puzzle, nextRow, nextCol, cancellationToken))
+                    if (FillBoard(puzzle, cancellationToken))
                         return true;
-                }
-
-                // Check for cancellation
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    return false;
                 }
             }
 
-            // If no valid number can be placed, backtrack and reset the current cell
             puzzle.Board[row, col] = 0;
             return false;
         }
+
+        private static (int row, int col)? FindBestCell(SudokuPuzzle puzzle)
+        {
+            int size = puzzle.Size;
+            int minOptions = size + 1;
+            (int row, int col)? bestCell = null;
+
+            for (int row = 0; row < size; row++)
+            {
+                for (int col = 0; col < size; col++)
+                {
+                    if (puzzle.Board[row, col] == 0) // Find an empty cell
+                    {
+                        int options = 0;
+                        for (int num = 1; num <= size; num++)
+                        {
+                            if (IsValid(puzzle, row, col, num))
+                                options++;
+                        }
+
+                        if (options < minOptions)
+                        {
+                            minOptions = options;
+                            bestCell = (row, col);
+                        }
+                    }
+                }
+            }
+
+            return bestCell;
+        }
+
+
 
         // Helper method to generate a shuffled list of numbers from 1 to 'size'
         private static int[] GetShuffledNumbers(int size)
@@ -190,6 +248,12 @@ namespace SudokuApp.Services
         {
             _cancellationTokenSource?.Cancel();
             _cancellationTokenSource = new CancellationTokenSource();
+        }
+
+        public static async Task<SudokuPuzzle> GeneratePuzzleAsync(int gridSize, CancellationToken cancellationToken)
+        {
+            // Wrap puzzle generation in an asynchronous call
+            return await Task.Run(() => SudokuGenerator.Generate(gridSize, cancellationToken), cancellationToken);
         }
     }
 }

@@ -1,50 +1,85 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.Json;
+using SudokuApp.Models;
 using System.Security.Cryptography;
 
 namespace SudokuApp.Services
 {
     public static class UserManager
     {
-        private static readonly string filePath = Path.Combine("Data", "users.json");
-        private static List<User> users = LoadUsers();
+        private static readonly string usersDirectory = Path.Combine("Data", "Users");
 
         public static bool Login(string username, string password)
         {
-            return users.Any(u => u.Username == username && u.Password == HashPassword(password));
+            User? user = LoadUser(username);
+            return user != null && user.Password == HashPassword(password);
         }
 
         public static bool Register(string username, string password)
         {
-            if (users.Any(u => u.Username == username))
+            if (LoadUser(username) != null)
             {
                 return false; // Username already taken
             }
 
-            users.Add(new User { Username = username, Password = HashPassword(password) });
-            SaveUsers();
+            User newUser = new User { Username = username, Password = HashPassword(password) };
+            SaveUser(newUser);
             return true;
         }
 
-        private static void SaveUsers()
+        // New: Update user credentials (username and/or password)
+        public static bool UpdateUser(string oldUsername, string newUsername, string newPassword)
         {
-            // Ensure the directory exists before writing the file
-            Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+            // Check if new username is already taken (if changed)
+            if (!oldUsername.Equals(newUsername, StringComparison.OrdinalIgnoreCase) && LoadUser(newUsername) != null)
+                return false;
 
-            string json = JsonSerializer.Serialize(users, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(filePath, json);
+            User? user = LoadUser(oldUsername);
+            if (user == null)
+                return false;
+
+            // If username changes, delete the old file and update the username property.
+            if (!oldUsername.Equals(newUsername, StringComparison.OrdinalIgnoreCase))
+            {
+                DeleteUser(oldUsername);
+                user.Username = newUsername;
+            }
+            // Update password with new hash
+            user.Password = HashPassword(newPassword);
+
+            SaveUser(user);
+            return true;
         }
 
-        private static List<User> LoadUsers()
+        // New: Delete a user's account
+        public static bool DeleteUser(string username)
         {
-            if (!File.Exists(filePath))
-                return new List<User>(); // Return empty list if file does not exist
+            string userFilePath = Path.Combine(usersDirectory, $"{username}.json");
+            if (File.Exists(userFilePath))
+            {
+                File.Delete(userFilePath);
+                return true;
+            }
+            return false;
+        }
 
-            string json = File.ReadAllText(filePath);
-            return JsonSerializer.Deserialize<List<User>>(json) ?? new List<User>();
+        private static void SaveUser(User user)
+        {
+            Directory.CreateDirectory(usersDirectory);
+            string userFilePath = Path.Combine(usersDirectory, $"{user.Username}.json");
+            string json = JsonSerializer.Serialize(user, new JsonSerializerOptions { WriteIndented = true });
+            File.WriteAllText(userFilePath, json);
+        }
+
+        private static User? LoadUser(string username)
+        {
+            string userFilePath = Path.Combine(usersDirectory, $"{username}.json");
+            if (!File.Exists(userFilePath))
+                return null;
+
+            string json = File.ReadAllText(userFilePath);
+            return JsonSerializer.Deserialize<User>(json);
         }
 
         private static string HashPassword(string password)
@@ -56,10 +91,4 @@ namespace SudokuApp.Services
             }
         }
     }
-}
-
-public class User
-{
-    public string Username { get; set; }
-    public string Password { get; set; }
 }

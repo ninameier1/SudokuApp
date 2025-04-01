@@ -15,7 +15,7 @@ namespace SudokuApp.Models
 
     public class UserSettings
     {
-        public string Difficulty { get; set; } = "9x9";
+        public string Difficulty { get; set; } = "4x4";
     }
 
 }

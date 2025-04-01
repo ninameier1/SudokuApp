@@ -191,5 +191,11 @@ namespace SudokuApp.Services
             }
             return true;
         }
+
+        public static async Task<bool> SolvePuzzleAsync(SudokuPuzzle puzzle)
+        {
+            // Wrap puzzle solving in an asynchronous call
+            return await Task.Run(() => SudokuSolver.Solve(puzzle));
+        }
     }
 }
