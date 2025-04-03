@@ -65,47 +65,6 @@ namespace SudokuApp.Services
             return puzzle;
         }
 
-        //// Recursive method to fill the Sudoku board using backtracking
-        //private static bool FillBoard(SudokuPuzzle puzzle, int row, int col, CancellationToken cancellationToken)
-        //{
-        //    int size = puzzle.Size;
-
-        //    // If we reached the last row, the board is successfully filled
-        //    if (row == size)
-        //        return true;
-
-        //    // Calculate the next row and column to move to
-        //    int nextRow = col == size - 1 ? row + 1 : row;
-        //    int nextCol = col == size - 1 ? 0 : col + 1;
-
-        //    // Get a shuffled array of possible numbers for the current cell
-        //    int[] numbers = GetShuffledNumbers(size);
-
-        //    // Try placing each number in the current cell
-        //    foreach (int num in numbers)
-        //    {
-        //        // If the number is valid in this position, set it
-        //        if (IsValid(puzzle, row, col, num))
-        //        {
-        //            puzzle.Board[row, col] = num;
-
-        //            // Recursively try to fill the next cell
-        //            if (FillBoard(puzzle, nextRow, nextCol, cancellationToken))
-        //                return true;
-        //        }
-
-        //        // Check for cancellation
-        //        if (cancellationToken.IsCancellationRequested)
-        //        {
-        //            return false;
-        //        }
-        //    }
-
-        //    // If no valid number can be placed, backtrack and reset the current cell
-        //    puzzle.Board[row, col] = 0;
-        //    return false;
-        //}
-
         private static bool FillBoard(SudokuPuzzle puzzle, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested(); //  Check cancellation before each step

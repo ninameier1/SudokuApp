@@ -23,5 +23,6 @@ namespace SudokuApp.Models
             System.Array.Copy(Board, clone.Board, Board.Length);
             return clone;
         }
+
     }
 }

@@ -122,18 +122,31 @@ namespace SudokuApp.CustomControls
 
         public void ApplyPreFilledStyle()
         {
+            // Check if the cell is pre-filled
             if (IsPreFilled)
             {
+                // If pre-filled, set the background to LightGray and set it to ReadOnly
                 textBox.ReadOnly = true;
-                textBox.BackColor = Color.LightGray;
+                if (textBox.BackColor != Color.LightGray) // Only change if it's not already LightGray
+                {
+                    textBox.BackColor = Color.LightGray;
+                }
                 textBox.ForeColor = Color.Black;
             }
             else
             {
+                // If not pre-filled, set it based on whether it's editable or not
                 textBox.ReadOnly = !IsEditable;
-                textBox.BackColor = IsEditable ? Color.White : Color.LightGray;
+
+                // Only reset the background to White if it's not already set to White
+                if (textBox.BackColor != Color.White)
+                {
+                    textBox.BackColor = IsEditable ? Color.White : Color.LightGray;
+                }
+
                 textBox.ForeColor = Color.Black;
             }
         }
+
     }
 }

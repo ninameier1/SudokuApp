@@ -15,7 +15,9 @@ namespace SudokuApp.Models
 
     public class UserSettings
     {
-        public string Difficulty { get; set; } = "4x4";
+        public int FinishedPuzzleCount { get; set; } = 0;
+        public TimeSpan TotalPlayTime { get; set; } = TimeSpan.Zero;
+        public string SavedGameState { get; set; }
     }
 
 }

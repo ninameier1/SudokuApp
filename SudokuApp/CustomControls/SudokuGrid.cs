@@ -23,6 +23,93 @@ namespace SudokuApp.CustomControls
             CreateCells();
         }
 
+
+        public void ClearBoard()
+        {
+            for (int i = 0; i < gridSize; i++)
+            {
+                for (int j = 0; j < gridSize; j++)
+                {
+                    SudokuCell cell = cells[i, j];
+                    cell.Value = 0;  // Reset the cell's value
+                    cell.IsEditable = true;  // Make all cells editable again
+                    cell.SetText("");  // Clear the text in the cell
+                    cell.ApplyPreFilledStyle(); // Reset any pre-filled styling
+
+                    //// Explicitly clear the background color
+                    cell.BackColor = Color.White; // Reset background color to white
+                }
+            }
+        }
+
+
+        public CellState[,] GetBoardState()
+        {
+            var board = new CellState[gridSize, gridSize];
+            for (int i = 0; i < gridSize; i++)
+            {
+                for (int j = 0; j < gridSize; j++)
+                {
+                    // Create a new CellState with the current cell's Value and IsEditable
+                    board[i, j] = new CellState(cells[i, j].Value, cells[i, j].IsEditable);
+                }
+            }
+            return board;
+        }
+
+        public void LoadBoardState(CellState[,] board)
+        {
+            // Ensure that the board passed matches the current grid size
+            if (board.GetLength(0) != gridSize || board.GetLength(1) != gridSize)
+            {
+                throw new ArgumentException("Board size does not match the current grid size.");
+            }
+
+            // Iterate over each cell in the board and update the SudokuGrid
+            for (int i = 0; i < gridSize; i++)
+            {
+                for (int j = 0; j < gridSize; j++)
+                {
+                    SudokuCell cell = cells[i, j];
+                    CellState cellState = board[i, j];  // Get the CellState for the current cell
+
+                    // Set the cell's value and update the UI
+                    cell.Value = cellState.Value;
+
+                    if (cellState.Value != 0)
+                    {
+                        // If the value is not 0 (pre-filled cell)
+                        cell.SetText(cellState.Value.ToString());
+                        cell.IsEditable = false;  // Mark as non-editable
+                        cell.IsPreFilled = true;  // It's pre-filled
+                    }
+                    else
+                    {
+                        // If the value is 0 (empty cell)
+                        cell.SetText("");
+                        cell.IsEditable = cellState.IsEditable;  // Set the editability from CellState
+                        cell.IsPreFilled = false;  // It's not pre-filled
+                    }
+
+                    // Reset any previous hint or highlight flags
+                    cell.IsHint = false;
+
+                    // Apply the default styling based on whether the cell is pre-filled or not
+                    cell.ApplyPreFilledStyle();
+
+                    // Set the background color based on pre-filled state
+                    cell.BackColor = cell.IsPreFilled ? Color.LightGray : Color.White;
+
+                    // Update the background color for the text box
+                    foreach (Control ctrl in cell.Controls)
+                    {
+                        ctrl.BackColor = cell.BackColor;
+                    }
+                }
+            }
+        }
+
+
         // Creates/recreates the cell controls for the current gridSize.
         private void CreateCells()
         {

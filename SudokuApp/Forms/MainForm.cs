@@ -6,6 +6,7 @@ using SudokuApp.Models;
 using SudokuApp.Services;
 using SudokuApp.Utils;
 using SudokuApp.CustomControls;
+using System.Text.Json;
 
 namespace SudokuApp.Forms
 {
@@ -26,6 +27,13 @@ namespace SudokuApp.Forms
         private int hintCount = 0;
         private const int maxHints = 5;
         private Label lblHintCounter;
+        private User _currentUser;
+        private System.Windows.Forms.Timer playTimer;
+        private TimeSpan playTime = TimeSpan.Zero;
+        private Label lblPlayTime;
+        private ListView lvLeaderboard;
+        private ComboBox cmbSize;
+
 
         public MainForm()
         {
@@ -57,11 +65,15 @@ namespace SudokuApp.Forms
                 Text = "Start Sudoku",
                 Width = 150,
                 Height = 50,
+                FlatStyle = FlatStyle.Flat,
                 BackColor = Color.Lavender,
+
                 Left = (this.Width - 150) / 2,
                 Top = (this.Height - 50) / 2,
                 Name = "startGameButton"
             };
+            startGameButton.FlatAppearance.BorderColor = Color.Plum; // Set the border color to Plum
+            startGameButton.FlatAppearance.BorderSize = 2; 
             startGameButton.Click += StartGameButton_Click;
             startPanel.Controls.Add(startGameButton);
 
@@ -71,14 +83,18 @@ namespace SudokuApp.Forms
                 Text = "Login/Register",
                 Width = 150,
                 Height = 50,
+                FlatStyle = FlatStyle.Flat,
                 BackColor = Color.Lavender,
                 Left = (this.Width - 150) / 2,
                 Top = startGameButton.Bottom + 10,
                 Name = "loginButton"
             };
+            loginButton.FlatAppearance.BorderColor = Color.Plum; 
+            loginButton.FlatAppearance.BorderSize = 2; 
             loginButton.Click += LoginButton_Click;
             startPanel.Controls.Add(loginButton);
         }
+
 
 
         private void LoginButton_Click(object sender, EventArgs e)
@@ -101,6 +117,7 @@ namespace SudokuApp.Forms
             }
             loginPanel.Visible = true;
         }
+
 
         private void InitializeLoginPage()
         {
@@ -150,6 +167,7 @@ namespace SudokuApp.Forms
                 Text = "Login",
                 Width = 75,
                 BackColor = Color.Lavender,
+                FlatStyle = FlatStyle.Flat,
                 Left = (this.Width - 200) / 2,
                 Top = passwordTextbox.Bottom + 10,
             };
@@ -162,6 +180,7 @@ namespace SudokuApp.Forms
                 Text = "Register",
                 Width = 75,
                 BackColor = Color.Lavender,
+                FlatStyle = FlatStyle.Flat,
                 Left = loginButton.Right + 5,
                 Top = passwordTextbox.Bottom + 10,
             };
@@ -173,6 +192,7 @@ namespace SudokuApp.Forms
                 Text = "Cancel",
                 Width = 75,
                 BackColor = Color.Lavender,
+                FlatStyle = FlatStyle.Flat,
                 Left = registerButton.Right + 5,
                 Top = passwordTextbox.Bottom + 10,
             };
@@ -252,6 +272,7 @@ namespace SudokuApp.Forms
                 Text = "Register",
                 Width = 75,
                 BackColor = Color.Lavender,
+                FlatStyle = FlatStyle.Flat,
                 Left = (this.Width - 200) / 2,
                 Top = passwordTextbox.Bottom + 10,
             };
@@ -277,6 +298,7 @@ namespace SudokuApp.Forms
                 Text = "Cancel",
                 Width = 75,
                 BackColor = Color.Lavender,
+                FlatStyle = FlatStyle.Flat,
                 Left = registerButton.Right + 5,
                 Top = passwordTextbox.Bottom + 10,
             };
@@ -291,11 +313,21 @@ namespace SudokuApp.Forms
 
 
 
+        private void BtnGoToLogin_Click(object sender, EventArgs e)
+        {
+            // Hide Sudoku page
+            if (sudokuPanel != null)
+                sudokuPanel.Visible = false;
 
+            // Show Login page
+            ShowLoginPage();
+            RefreshUI();
+        }
 
         private void StartGameButton_Click(object sender, EventArgs e)
         {
             ShowSudokuPage();
+            RefreshUI();
         }
 
         private void ShowSudokuPage()
@@ -314,26 +346,9 @@ namespace SudokuApp.Forms
                 InitializeSudokuPage();
             }
             sudokuPanel.Visible = true;
-
+            sudokuGrid.ClearBoard();
             RefreshUI();
         }
-
-        private void BtnGoToLogin_Click(object sender, EventArgs e)
-        {
-            // Hide Sudoku page
-            if (sudokuPanel != null)
-                sudokuPanel.Visible = false;
-
-            // Show Login page
-            ShowLoginPage();
-        }
-
-
-        //private void BtnGoToLogin_Click(object sender, EventArgs e)
-        //{
-        //    // Show the login page
-        //    ShowLoginPage();
-        //}
 
         private void InitializeSudokuPage()
         {
@@ -351,8 +366,24 @@ namespace SudokuApp.Forms
             };
             sudokuPanel.Controls.Add(sudokuGrid);
 
+
+            // Create and configure the leaderboard ListView
+            lvLeaderboard = new ListView
+            {
+                Name = "lvLeaderboard",
+                View = View.Details,
+                Width = 170,
+                Height = 200,
+                BackColor = Color.LightCyan,
+                BorderStyle = BorderStyle.None,
+                Location = new Point(10, 10)
+            };
+            lvLeaderboard.Columns.Add("User", 100);
+            lvLeaderboard.Columns.Add("Points", 70);
+            sudokuPanel.Controls.Add(lvLeaderboard);
+
             // ComboBox for puzzle size
-            ComboBox cmbSize = new ComboBox
+            cmbSize = new ComboBox
             {
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 BackColor = Color.Lavender,
@@ -382,8 +413,11 @@ namespace SudokuApp.Forms
                 Height = 30,
                 Location = new Point(cmbSize.Right + 10, cmbSize.Top),
                 BackColor = Color.Lavender,
+                FlatStyle = FlatStyle.Flat,
                 Name = "btnGenerate"
             };
+            btnGenerate.FlatAppearance.BorderColor = Color.Plum; // Set the border color to Plum
+            btnGenerate.FlatAppearance.BorderSize = 2;
             btnGenerate.Click += async (sender, e) => await btnGenerate_Click(sender, e);
             sudokuPanel.Controls.Add(btnGenerate);
 
@@ -395,8 +429,11 @@ namespace SudokuApp.Forms
                 Height = 30,
                 Location = new Point(btnGenerate.Right + 10, btnGenerate.Top),
                 BackColor = Color.Lavender,
+                FlatStyle = FlatStyle.Flat,
                 Name = "btnReset"
             };
+            btnReset.FlatAppearance.BorderColor = Color.Plum; // Set the border color to Plum
+            btnReset.FlatAppearance.BorderSize = 2;
             btnReset.Click += btnReset_Click;
             sudokuPanel.Controls.Add(btnReset);
 
@@ -408,13 +445,16 @@ namespace SudokuApp.Forms
                 Height = 30,
                 Location = new Point(btnReset.Right + 10, sudokuGrid.Bottom + 10),
                 BackColor = Color.Lavender,
+                FlatStyle = FlatStyle.Flat,
                 Name = "btnHint"
             };
+            btnHint.FlatAppearance.BorderColor = Color.Plum; // Set the border color to Plum
+            btnHint.FlatAppearance.BorderSize = 2;
             btnHint.Click += btnHint_Click;
             sudokuPanel.Controls.Add(btnHint);
 
             // Add hint counter
-            Label lblHintCounter = new Label
+            lblHintCounter = new Label
             {
                 Text = "Hints: 0/5",
                 AutoSize = true,
@@ -432,81 +472,44 @@ namespace SudokuApp.Forms
                 Height = 30,
                 Location = new Point(sudokuGrid.Right - 100, btnHint.Top),
                 BackColor = Color.Lavender,
+                FlatStyle = FlatStyle.Flat,
                 Name = "btnSolve"
             };
+            btnSolve.FlatAppearance.BorderColor = Color.Plum; // Set the border color to Plum
+            btnSolve.FlatAppearance.BorderSize = 2;
             btnSolve.Click += async (s, e) => await SolvePuzzleAsync();
             sudokuPanel.Controls.Add(btnSolve);
 
-            //if (string.IsNullOrEmpty(_username))
-            //{
-            //    // User is not logged in, show a label telling them they aren't logged in
-            //    Label lblUser = new Label
-            //    {
-            //        Text = $"Not logged in",
-            //        AutoSize = true,
-            //        BackColor = Color.HotPink,
-            //        Left = sudokuGrid.Right + 10,
-            //        Top = sudokuGrid.Top + 200,
-            //        Name = "lblUser"
-            //    };
-            //    sudokuPanel.Controls.Add(lblUser);
-            //    // User is not logged in, show the "Go Back" button
-            //    Button btnGoToLogin = new Button
-            //    {
-            //        Text = "Go to Login",
-            //        Width = 150,
-            //        Height = 50,
-            //        BackColor = Color.Lavender,
-            //        Left = sudokuGrid.Right + 10,
-            //        Top = sudokuGrid.Top,
-            //        Name = "btnGoToLogin"
-            //    };
-            //    btnGoToLogin.Click += BtnGoToLogin_Click;
-            //    sudokuPanel.Controls.Add(btnGoToLogin);
+            // Button for saving the current game
+            Button btnSave = new Button
+            {
+                Text = "Save Game",
+                Width = 100,
+                Height = 30,
+                Location = new Point(btnSolve.Left, btnSolve.Bottom + 10),
+                BackColor = Color.Lavender,
+                FlatStyle = FlatStyle.Flat,
+                Name = "btnSave"
+            };
+            btnSave.Click += BtnSave_Click;
+            sudokuPanel.Controls.Add(btnSave);
 
-            //}
-            //else
-            //{
-            //    // User is logged in, show a label with the username
-            //    Label lblUser = new Label
-            //    {
-            //        Text = $"Logged in as {_username}",
-            //        AutoSize = true,
-            //        BackColor = Color.HotPink,
-            //        Left = sudokuGrid.Right + 10,
-            //        Top = sudokuGrid.Top,
-            //        Name = "lblUser"
-            //    };
-            //    sudokuPanel.Controls.Add(lblUser);
+            // Button for loading a saved game
+            Button btnLoad = new Button
+            {
+                Text = "Load Game",
+                Width = 100,
+                Height = 30,
+                Location = new Point(btnSave.Right + 10, btnSave.Top),
+                BackColor = Color.Lavender,
+                FlatStyle = FlatStyle.Flat,
+                Name = "btnLoad"
+            };
+            btnLoad.Click += BtnLoad_Click;
+            sudokuPanel.Controls.Add(btnLoad);
 
-            //    // Add a Settings button below the username label
-            //    Button btnSettings = new Button
-            //    {
-            //        Text = "Settings",
-            //        Width = 100,
-            //        Height = 40,
-            //        BackColor = Color.LightSteelBlue,
-            //        Left = lblUser.Left,
-            //        Top = lblUser.Bottom + 10,
-            //        Name = "btnSettings"
-            //    };
-            //    btnSettings.Click += (s, e) => { ShowSettingsPage(); };
-            //    sudokuPanel.Controls.Add(btnSettings);
 
-            //    // Log Out button
-            //    Button btnLogout = new Button
-            //    {
-            //        Text = "Log Out",
-            //        Width = 100,
-            //        Height = 40,
-            //        BackColor = Color.LightCoral,
-            //        Left = lblUser.Left,
-            //        Top = btnSettings.Bottom + 10,
-            //        Name = "btnLogout"
-            //    };
-            //    btnLogout.Click += btnLogout_Click;
-            //    sudokuPanel.Controls.Add(btnLogout);
-            //}
+
         }
 
 
@@ -591,22 +594,39 @@ namespace SudokuApp.Forms
                 Text = "Update",
                 Width = 100,
                 BackColor = Color.Lavender,
+                FlatStyle = FlatStyle.Flat,
                 Left = lblNewPassword.Left,
                 Top = lblNewPassword.Bottom + 20
             };
+
             btnUpdate.Click += (s, e) =>
             {
-                // Call UpdateUser
-                bool success = UserManager.UpdateUser(_username, txtNewUsername.Text, txtNewPassword.Text);
-                if (success)
+                string newUsername = txtNewUsername.Text;
+                string newPassword = txtNewPassword.Text;
+
+                // Update user only if username or password has changed
+                if (_currentUser.Username != newUsername || !string.IsNullOrEmpty(newPassword))
                 {
-                    MessageBox.Show("Account updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    _username = txtNewUsername.Text; // update the global username variable
-                    RefreshUI();
-                }
-                else
-                {
-                    MessageBox.Show("Update failed. The new username might be taken.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    bool success = UserManager.UpdateUser(_currentUser, newUsername, newPassword);
+
+                    if (success)
+                    {
+                        MessageBox.Show("Account updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        // Update the in-memory user safely
+                        _currentUser.Username = newUsername;
+                        if (!string.IsNullOrEmpty(newPassword))
+                        {
+                            _currentUser.Password = UserManager.HashPassword(newPassword); // Store hash
+                        }
+
+                        RefreshUI();
+                        UpdateLeaderboard();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Update failed. The new username might be taken.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
             };
             settingsPanel.Controls.Add(btnUpdate);
@@ -618,6 +638,7 @@ namespace SudokuApp.Forms
                 Width = 120,
                 Left = btnUpdate.Right + 20,
                 Top = btnUpdate.Top,
+                FlatStyle = FlatStyle.Flat,
                 BackColor = Color.LightCoral
             };
             btnDelete.Click += (s, e) =>
@@ -627,11 +648,15 @@ namespace SudokuApp.Forms
                     "Confirm Deletion", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                 if (dr == DialogResult.Yes)
                 {
-                    bool deleted = UserManager.DeleteUser(_username);
+                    bool deleted = UserManager.DeleteUser(_currentUser.Username);  // Use _currentUser.Username
                     if (deleted)
                     {
                         MessageBox.Show("Account deleted successfully.", "Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        _username = string.Empty;
+
+                        // Reset _currentUser and _username after deletion
+                        _currentUser = null;  // Set current user to null after deletion
+                        _username = string.Empty; // Reset the _username variable as well
+
                         // Redirect to start page or log out the user
                         settingsPanel.Visible = false;
                         startPanel.Visible = true;
@@ -642,6 +667,7 @@ namespace SudokuApp.Forms
                     }
                 }
             };
+
             settingsPanel.Controls.Add(btnDelete);
 
             // Back button to return to the main game page
@@ -650,6 +676,7 @@ namespace SudokuApp.Forms
                 Text = "Back",
                 Width = 100,
                 BackColor = Color.Lavender,
+                FlatStyle = FlatStyle.Flat,
                 Left = btnUpdate.Left,
                 Top = btnUpdate.Bottom + 20
             };
@@ -662,19 +689,69 @@ namespace SudokuApp.Forms
         }
 
 
+        //private void LoginUser(string username, string password)
+        //{
+        //    User user = UserManager.GetUser(username, password);  // Fetch the user object
+        //    //User user = UserManager.LoadUser(username);
+        //    //User? user = LoadUser(username);  // Load the user from file
+        //    //if (user != null && VerifyPassword(password, user.Password))
+
+        //        if (user != null)
+        //    {
+        //        _currentUser = user;  // Store the user object in the current session
+        //        _username = _currentUser.Username;  // Set _username with the logged-in user's username
+
+        //        ShowSudokuPage();  // Show the main Sudoku page after successful login
+        //        RefreshUI();  // Refresh the UI
+        //    }
+        //    else
+        //    {
+        //        MessageBox.Show("Invalid login. Please try again.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        //    }
+        //}
+
+        //private bool VerifyPassword(string enteredPassword, string storedHashedPassword)
+        //{
+        //    string hashedEnteredPassword = HashPassword(enteredPassword);  // Hash the entered password
+        //    return string.Equals(hashedEnteredPassword, storedHashedPassword, StringComparison.Ordinal);
+        //}
+
         private void LoginUser(string username, string password)
         {
-            if (UserManager.Login(username, password))
+            // Load the user from the file based on the username
+            User user = UserManager.LoadUser(username);
+
+            if (user != null)
             {
-                _username = username;
-                ShowSudokuPage();
-                RefreshUI();
+                // Verify the entered password by comparing the hash of the entered password with the stored hash
+                if (VerifyPassword(password, user.Password))
+                {
+                    _currentUser = user;  // Store the user object in the current session
+                    _username = _currentUser.Username;  // Set _username with the logged-in user's username
+
+                    ShowSudokuPage();  // Show the main Sudoku page after successful login
+                    RefreshUI();  // Refresh the UI
+                }
+                else
+                {
+                    MessageBox.Show("Invalid login. Please try again.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             else
             {
-                MessageBox.Show("Invalid login. Please try again.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("User not found.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
+        private bool VerifyPassword(string enteredPassword, string storedHashedPassword)
+        {
+            // Hash the entered password
+            string hashedEnteredPassword = UserManager.HashPassword(enteredPassword);
+
+            // Compare the entered password hash with the stored hash
+            return string.Equals(hashedEnteredPassword, storedHashedPassword, StringComparison.Ordinal);
+        }
+
 
         private void CancelLogin()
         {
@@ -684,35 +761,20 @@ namespace SudokuApp.Forms
                 startPanel.Visible = true;
         }
 
-        //private void btnLogout_Click(object sender, EventArgs e)
-        //{
-        //    // Log out: reset the username
-        //    _username = string.Empty;
-
-        //    // Find the label and update its text
-        //    Label lblUser = (Label)sudokuPanel.Controls["lblUser"];
-        //    if (lblUser != null)
-        //    {
-        //        lblUser.Text = "Not Logged In"; // Or any other appropriate message
-        //    }
-
-        //    // Optionally, hide the sudoku panel and show the start panel
-        //    sudokuPanel.Visible = false;
-        //    startPanel.Visible = true;
-        //}
-
-
 
         private void btnLogout_Click(object sender, EventArgs e)
         {
-            // Log out: reset the username
-            _username = string.Empty;
+            // Log out: reset the current user
+            _currentUser = null;
 
-            // Refresh the UI after logging out
+            // Reset playtime
+            playTime = TimeSpan.Zero;
+            lblPlayTime.Text = "Playtime: 00:00:00";
+
+            ShowLoginPage();
             RefreshUI();
-
+            sudokuGrid.ClearBoard();
         }
-
 
         private void btnReset_Click(object sender, EventArgs e)
         {
@@ -727,7 +789,18 @@ namespace SudokuApp.Forms
                 return;
             }
 
-            // Check if the user has exceeded the hint limit
+            if (sudokuGrid == null)
+            {
+                MessageBox.Show("Error: Sudoku grid is not initialized.");
+                return;
+            }
+
+            if (lblHintCounter == null)
+            {
+                MessageBox.Show("Error: Hint counter label is missing.");
+                return;
+            }
+
             if (hintCount >= maxHints)
             {
                 MessageBox.Show("Maximum hints used.");
@@ -746,6 +819,66 @@ namespace SudokuApp.Forms
                 MessageBox.Show("No hint available.");
             }
         }
+
+        private void PlayTimer_Tick(object sender, EventArgs e)
+        {
+            playTime = playTime.Add(TimeSpan.FromSeconds(1));
+            lblPlayTime.Text = "Playtime: " + playTime.ToString(@"hh\:mm\:ss");
+
+            // If a user is logged in, update their total playtime.
+            if (_currentUser != null)
+            {
+                _currentUser.Settings.TotalPlayTime = _currentUser.Settings.TotalPlayTime.Add(TimeSpan.FromSeconds(1));
+                // save progress periodically:
+                UserManager.SaveUser(_currentUser);
+            }
+        }
+
+   
+
+
+        private void UpdateLeaderboard()
+        {
+            lvLeaderboard.Items.Clear();
+
+            string usersDir = Path.Combine("Data", "Users");
+            if (Directory.Exists(usersDir))
+            {
+                // Get all user files (assuming .json files)
+                var userFiles = Directory.GetFiles(usersDir, "*.json");
+                var users = new List<User>();
+
+                foreach (var file in userFiles)
+                {
+                    try
+                    {
+                        string json = File.ReadAllText(file);
+                        var user = JsonSerializer.Deserialize<User>(json);
+                        if (user != null)
+                            users.Add(user);
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log or handle deserialization errors as needed.
+                        Logger.Log($"Error reading user file {file}: {ex.Message}", "ERROR");
+                    }
+                }
+
+                // Sort users by FinishedPuzzleCount descending
+                var sortedUsers = users.OrderByDescending(u => u.Settings.FinishedPuzzleCount).ToList();
+
+                // Add sorted users to the ListView
+                foreach (var user in sortedUsers)
+                {
+                    var item = new ListViewItem(user.Username);
+                    item.SubItems.Add(user.Settings.FinishedPuzzleCount.ToString());
+                    lvLeaderboard.Items.Add(item);
+                }
+            }
+        }
+
+
+
 
         private async Task btnGenerate_Click(object sender, EventArgs e)
         {
@@ -807,6 +940,7 @@ namespace SudokuApp.Forms
                     btnReset.Enabled = true;
                     btnHint.Enabled = true;
                 });
+
             }
         }
 
@@ -890,8 +1024,26 @@ namespace SudokuApp.Forms
                     }
                 }
 
-                MessageBox.Show("Solved!");
-                Logger.Log("Puzzle successfully solved.", "INFO");
+                // Only update if a user is logged in
+                if (_currentUser != null)
+                {
+                    // Increase finished puzzle count
+                    _currentUser.Settings.FinishedPuzzleCount++;
+
+                    // Save progress
+                    UserManager.SaveUser(_currentUser);
+
+                    MessageBox.Show($"Solved! Puzzles completed: {_currentUser.Settings.FinishedPuzzleCount}");
+                    Logger.Log($"Puzzle solved by {_currentUser.Username}. Total completed: {_currentUser.Settings.FinishedPuzzleCount}", "INFO");
+
+                    // Update leaderboard after successful completion
+                    UpdateLeaderboard();
+                }
+                else
+                {
+                    // Handle the case for non-logged-in users if needed
+                    MessageBox.Show("Solved!");
+                }
             }
             else
             {
@@ -996,14 +1148,16 @@ namespace SudokuApp.Forms
         }
 
 
-       private void RefreshUI()
+        private void RefreshUI()
         {
-            // Remove any existing login/logout-related controls first
+            // Remove any existing login/logout-related controls first,
+            // including lblPlayTime so that we don't keep a stale one.
             var existingControls = sudokuPanel.Controls.OfType<Control>()
-                .Where(ctrl => ctrl.Name == "lblUser" || 
-                 ctrl.Name == "btnGoToLogin" ||
-                 ctrl.Name == "btnLogout" ||
-                 ctrl.Name == "btnSettings")
+                .Where(ctrl => ctrl.Name == "lblUser" ||
+                               ctrl.Name == "btnGoToLogin" ||
+                               ctrl.Name == "btnLogout" ||
+                               ctrl.Name == "btnSettings" ||
+                               ctrl.Name == "lblPlayTime")
                 .ToList();
 
             foreach (var control in existingControls)
@@ -1012,12 +1166,12 @@ namespace SudokuApp.Forms
             }
 
             // Add controls based on the current login state
-            if (string.IsNullOrEmpty(_username))
+            if (_currentUser == null)
             {
                 // User is not logged in, show the "Go to Login" button
                 Label lblUser = new Label
                 {
-                    Text = $"Not logged in",
+                    Text = "Not logged in",
                     AutoSize = true,
                     BackColor = Color.HotPink,
                     Left = sudokuGrid.Right + 10,
@@ -1032,6 +1186,7 @@ namespace SudokuApp.Forms
                     Width = 150,
                     Height = 50,
                     BackColor = Color.Lavender,
+                    FlatStyle = FlatStyle.Flat,
                     Left = lblUser.Left,
                     Top = lblUser.Bottom + 10,
                     Name = "btnGoToLogin"
@@ -1044,7 +1199,7 @@ namespace SudokuApp.Forms
                 // User is logged in, show a label with the username
                 Label lblUser = new Label
                 {
-                    Text = $"Logged in as {_username}",
+                    Text = $"Logged in as {_currentUser.Username}",
                     AutoSize = true,
                     BackColor = Color.HotPink,
                     Left = sudokuGrid.Right + 10,
@@ -1053,14 +1208,39 @@ namespace SudokuApp.Forms
                 };
                 sudokuPanel.Controls.Add(lblUser);
 
+                // Create and add the playtime label
+                lblPlayTime = new Label
+                {
+                    Name = "lblPlayTime",
+                    Text = "Playtime: 00:00:00",
+                    AutoSize = true,
+                    Location = new Point(lblUser.Left, lblUser.Bottom + 10)
+                };
+                sudokuPanel.Controls.Add(lblPlayTime);
+
+                // Initialize and start the timer (if not already done)
+                if (playTimer == null)
+                {
+                    playTimer = new System.Windows.Forms.Timer();
+                    playTimer.Interval = 1000; // 1 second
+                    playTimer.Tick += PlayTimer_Tick;
+                    playTimer.Start();
+                }
+
+
+                // Update the playtime label
+                playTime = _currentUser.Settings.TotalPlayTime;
+                lblPlayTime.Text = "Playtime: " + playTime.ToString(@"hh\:mm\:ss");
+
                 Button btnSettings = new Button
                 {
                     Text = "Settings",
                     Width = 100,
                     Height = 40,
-                    BackColor = Color.LightSteelBlue,
-                    Left = lblUser.Left,
-                    Top = lblUser.Bottom + 10,
+                    BackColor = Color.Lavender,
+                    FlatStyle = FlatStyle.Flat,
+                    Left = lblPlayTime.Left,
+                    Top = lblPlayTime.Bottom + 10,
                     Name = "btnSettings"
                 };
                 btnSettings.Click += (s, e) => { ShowSettingsPage(); };
@@ -1072,6 +1252,7 @@ namespace SudokuApp.Forms
                     Width = 100,
                     Height = 40,
                     BackColor = Color.LightCoral,
+                    FlatStyle = FlatStyle.Flat,
                     Left = lblUser.Left,
                     Top = btnSettings.Bottom + 10,
                     Name = "btnLogout"
@@ -1079,8 +1260,77 @@ namespace SudokuApp.Forms
                 btnLogout.Click += btnLogout_Click;
                 sudokuPanel.Controls.Add(btnLogout);
             }
+            UpdateLeaderboard();
         }
 
+
+        private void BtnSave_Click(object sender, EventArgs e)
+        {
+            // Ensure that the user is logged in
+            if (_currentUser == null)
+            {
+                MessageBox.Show("Please log in to save your game.", "Not Logged In", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Get the current board state from the sudokuGrid control
+            CellState[,] currentBoard = sudokuGrid.GetBoardState();
+
+            // Get the current grid size (this could be stored in a variable like `gridSize`)
+            int currentGridSize = gridSize; // Or dynamically set this based on the selected size
+
+            // Save the current game state using the username and grid size
+            SudokuManager.SaveGame(_currentUser.Username, currentBoard, currentGridSize);
+
+            MessageBox.Show("Game saved successfully!", "Save Game", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private async void BtnLoad_Click(object sender, EventArgs e)
+        {
+            // Ensure that the user is logged in
+            if (_currentUser == null)
+            {
+                MessageBox.Show("Please log in to load your game.", "Not Logged In", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                // Load the saved game board for the current user
+                var (loadedBoard, loadedGridSize) = SudokuManager.LoadGame(_currentUser.Username);
+
+                // Update the ComboBox to reflect the loaded grid size
+                cmbSize.SelectedItem = loadedGridSize == 4 ? "4x4" : loadedGridSize == 9 ? "9x9" : "16x16";
+
+                // Update the Sudoku grid with the loaded board
+                sudokuGrid.LoadBoardState(loadedBoard);
+
+                // Make sure to update the puzzle object for the hint generator
+                puzzle = new SudokuPuzzle(loadedGridSize);  // Use the loaded grid size
+
+                // Copy the values from the loaded board to the puzzle's Board
+                for (int i = 0; i < loadedBoard.GetLength(0); i++)
+                {
+                    for (int j = 0; j < loadedBoard.GetLength(1); j++)
+                    {
+                        puzzle.Board[i, j] = loadedBoard[i, j].Value;  // Copy each value to the puzzle's Board
+                    }
+                }
+
+                // Optionally update any additional UI elements
+                MessageBox.Show("Game loaded successfully!", "Load Game", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (FileNotFoundException ex)
+            {
+                // Show an error popup if no saved game is found
+                MessageBox.Show("No saved game found for this user.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                // Handle any other exceptions that might occur
+                MessageBox.Show($"An error occurred while loading the game: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
 
 
 
