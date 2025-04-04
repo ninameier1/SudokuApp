@@ -29,145 +29,10 @@ namespace SudokuApp.Services
             return true;
         }
 
-        //// Update user credentials (username and/or password)
-        //public static bool UpdateUser(string oldUsername, string newUsername, string newPassword)
-        //{
-        //    // Check if new username is already taken (if changed)
-        //    if (!oldUsername.Equals(newUsername, StringComparison.OrdinalIgnoreCase) && LoadUser(newUsername) != null)
-        //        return false;
-
-        //    User? user = LoadUser(oldUsername);
-        //    if (user == null)
-        //        return false;
-
-        //    // If username changes, delete the old file and update the username property.
-        //    if (!oldUsername.Equals(newUsername, StringComparison.OrdinalIgnoreCase))
-        //    {
-        //        DeleteUser(oldUsername);
-        //        user.Username = newUsername;
-        //    }
-        //    // Update password with new hash
-        //    user.Password = HashPassword(newPassword);
-
-        //    SaveUser(user);
-        //    return true;
-        //}
-
-        //public static bool UpdateUser(string oldUsername, string newUsername, string newPassword)
-        //{
-        //    // Check if new username is already taken (if changed)
-        //    if (!oldUsername.Equals(newUsername, StringComparison.OrdinalIgnoreCase) && LoadUser(newUsername) != null)
-        //        return false;
-
-        //    User? user = LoadUser(oldUsername);
-        //    if (user == null)
-        //        return false;
-
-        //    // If username changes, delete the old file and update the username property.
-        //    if (!oldUsername.Equals(newUsername, StringComparison.OrdinalIgnoreCase))
-        //    {
-        //        // Ensure the old file is deleted before updating
-        //        bool deleteSuccess = DeleteUser(oldUsername);
-        //        if (!deleteSuccess)
-        //        {
-        //            return false;  // If deleting the old user file failed, return false
-        //        }
-
-        //        user.Username = newUsername;
-        //    }
-
-        //    // Update password with new hash
-        //    user.Password = HashPassword(newPassword);
-
-        //    // Save the updated user data
-        //    SaveUser(user);
-
-        //    return true;
-        //}
-
-        //public static bool UpdateUser(string oldUsername, string newUsername, string newPassword)
-        //{
-        //    // Check if new username is already taken (if changed)
-        //    if (!oldUsername.Equals(newUsername, StringComparison.OrdinalIgnoreCase) && LoadUser(newUsername) != null)
-        //        return false;
-
-        //    User? user = LoadUser(oldUsername);
-        //    if (user == null)
-        //        return false;
-
-        //    // If username changes, delete the old file and update the username property.
-        //    if (!oldUsername.Equals(newUsername, StringComparison.OrdinalIgnoreCase))
-        //    {
-        //        // Ensure the old file is deleted before updating
-        //        bool deleteSuccess = DeleteUser(oldUsername);
-        //        if (!deleteSuccess)
-        //        {
-        //            return false;  // If deleting the old user file failed, return false
-        //        }
-
-        //        // Update the user's username
-        //        user.Username = newUsername;
-        //    }
-
-        //    // Update password with new hash
-        //    user.Password = HashPassword(newPassword);
-
-        //    // Save the updated user data
-        //    SaveUser(user);
-
-        //    // Now update the _currentUser in memory (the logged-in user)
-        //    if (_currentUser != null)
-        //    {
-        //        _currentUser.Username = newUsername;  // Update the logged-in user with the new username
-        //    }
-
-        //    return true;
-        //}
-
-        //public static bool UpdateUser(User currentUser, string newUsername, string newPassword)
-        //{
-        //    // Check if new username is already taken (if changed)
-        //    if (!currentUser.Username.Equals(newUsername, StringComparison.OrdinalIgnoreCase) && LoadUser(newUsername) != null)
-        //        return false;
-
-        //    // Load user data from file
-        //    User? user = LoadUser(currentUser.Username);
-        //    if (user == null)
-        //        return false;
-
-        //    // If username changes, delete the old file and update the username property.
-        //    if (!currentUser.Username.Equals(newUsername, StringComparison.OrdinalIgnoreCase))
-        //    {
-        //        // Ensure the old file is deleted before updating
-        //        bool deleteSuccess = DeleteUser(currentUser.Username);
-        //        if (!deleteSuccess)
-        //        {
-        //            return false;  // If deleting the old user file failed, return false
-        //        }
-
-        //        // Update the user's username
-        //        user.Username = newUsername;
-        //    }
-
-        //    // Update password with new hash
-        //    if (!string.IsNullOrEmpty(newPassword))
-        //    {
-        //        user.Password = HashPassword(newPassword);  // Update password only if a new one is provided
-        //    }
-
-        //    // Save the updated user data
-        //    SaveUser(user);
-
-        //    // Now update the _currentUser in memory (the logged-in user) - update from the form layer
-        //    currentUser.Username = newUsername;  // Update the logged-in user with the new username
-
-        //    return true;
-        //}
-
+        // Update user credentials (username and/or password)
         public static bool UpdateUser(User currentUser, string newUsername, string newPassword)
         {
             // Check if new username is already taken (if changed)
-            // Ensure new username is not taken
             if (!currentUser.Username.Equals(newUsername, StringComparison.OrdinalIgnoreCase) && LoadUser(newUsername) != null)
             {
                 return false;
@@ -207,19 +72,25 @@ namespace SudokuApp.Services
             return true;
         }
 
-
-
-
-
-        //// Delete a user's account
         //public static bool DeleteUser(string username)
         //{
         //    string userFilePath = Path.Combine(usersDirectory, $"{username}.json");
+
         //    if (File.Exists(userFilePath))
         //    {
-        //        File.Delete(userFilePath);
-        //        return true;
+        //        try
+        //        {
+        //            File.Delete(userFilePath);
+        //            return true;
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            // Log the error if the file cannot be deleted.
+        //            Logger.Log($"Error deleting user file {userFilePath}: {ex.Message}", "ERROR");
+        //            return false;
+        //        }
         //    }
+
         //    return false;
         //}
 
@@ -232,27 +103,48 @@ namespace SudokuApp.Services
                 try
                 {
                     File.Delete(userFilePath);
-                    return true;
+
+                    if (!File.Exists(userFilePath))
+                    {
+                        Logger.Log($"Successfully deleted user file: {userFilePath}", "INFO");
+                        return true;
+                    }
+                    else
+                    {
+                        Logger.Log($"File still exists after deletion attempt: {userFilePath}", "ERROR");
+                        return false;
+                    }
                 }
                 catch (Exception ex)
                 {
-                    // Log the error if the file cannot be deleted.
                     Logger.Log($"Error deleting user file {userFilePath}: {ex.Message}", "ERROR");
                     return false;
                 }
             }
 
+            Logger.Log($"User file not found for deletion: {userFilePath}", "WARN");
             return false;
         }
 
 
+
+        //public static void SaveUser(User user)
+        //{
+        //    Directory.CreateDirectory(usersDirectory);
+        //    string userFilePath = Path.Combine(usersDirectory, $"{user.Username}.json");
+        //    string json = JsonSerializer.Serialize(user, new JsonSerializerOptions { WriteIndented = true });
+        //    File.WriteAllText(userFilePath, json);
+        //}
+
         public static void SaveUser(User user)
         {
+            Logger.Log($"[SaveUser] Called for: {user.Username}", "DEBUG");
             Directory.CreateDirectory(usersDirectory);
             string userFilePath = Path.Combine(usersDirectory, $"{user.Username}.json");
             string json = JsonSerializer.Serialize(user, new JsonSerializerOptions { WriteIndented = true });
             File.WriteAllText(userFilePath, json);
         }
+
 
         public static User? LoadUser(string username)
         {

@@ -138,11 +138,8 @@ namespace SudokuApp.CustomControls
                 // If not pre-filled, set it based on whether it's editable or not
                 textBox.ReadOnly = !IsEditable;
 
-                // Only reset the background to White if it's not already set to White
-                if (textBox.BackColor != Color.White)
-                {
-                    textBox.BackColor = IsEditable ? Color.White : Color.LightGray;
-                }
+                // Set background based on editability
+                textBox.BackColor = IsEditable ? Color.White : Color.LightGray;
 
                 textBox.ForeColor = Color.Black;
             }

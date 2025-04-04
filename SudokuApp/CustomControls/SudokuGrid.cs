@@ -32,15 +32,14 @@ namespace SudokuApp.CustomControls
                 {
                     SudokuCell cell = cells[i, j];
                     cell.Value = 0;  // Reset the cell's value
+                    cell.IsPreFilled = false;  // <-- Reset this flag dummydumdum!
                     cell.IsEditable = true;  // Make all cells editable again
                     cell.SetText("");  // Clear the text in the cell
-                    cell.ApplyPreFilledStyle(); // Reset any pre-filled styling
-
-                    //// Explicitly clear the background color
-                    cell.BackColor = Color.White; // Reset background color to white
+                    cell.ApplyPreFilledStyle(); // Reset styling
                 }
             }
         }
+
 
 
         public CellState[,] GetBoardState()
@@ -76,19 +75,20 @@ namespace SudokuApp.CustomControls
                     // Set the cell's value and update the UI
                     cell.Value = cellState.Value;
 
-                    if (cellState.Value != 0)
+                    // Use the saved IsEditable flag to determine if the cell is user-filled or pre-filled
+                    if (!cellState.IsEditable)
                     {
-                        // If the value is not 0 (pre-filled cell)
+                        // Cell was originally pre-filled, so mark as non-editable and grey out
                         cell.SetText(cellState.Value.ToString());
-                        cell.IsEditable = false;  // Mark as non-editable
-                        cell.IsPreFilled = true;  // It's pre-filled
+                        cell.IsEditable = false;
+                        cell.IsPreFilled = true;
                     }
                     else
                     {
-                        // If the value is 0 (empty cell)
-                        cell.SetText("");
-                        cell.IsEditable = cellState.IsEditable;  // Set the editability from CellState
-                        cell.IsPreFilled = false;  // It's not pre-filled
+                        // Cell was filled in by the user, so it should remain editable
+                        cell.SetText(cellState.Value != 0 ? cellState.Value.ToString() : "");
+                        cell.IsEditable = true;
+                        cell.IsPreFilled = false;
                     }
 
                     // Reset any previous hint or highlight flags

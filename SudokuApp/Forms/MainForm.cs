@@ -373,7 +373,7 @@ namespace SudokuApp.Forms
                 Name = "lvLeaderboard",
                 View = View.Details,
                 Width = 170,
-                Height = 200,
+                Height = 400,
                 BackColor = Color.LightCyan,
                 BorderStyle = BorderStyle.None,
                 Location = new Point(10, 10)
@@ -643,21 +643,19 @@ namespace SudokuApp.Forms
             };
             btnDelete.Click += (s, e) =>
             {
-                // Confirm deletion
                 DialogResult dr = MessageBox.Show("Are you sure you want to delete your account? This action cannot be undone.",
                     "Confirm Deletion", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                 if (dr == DialogResult.Yes)
                 {
-                    bool deleted = UserManager.DeleteUser(_currentUser.Username);  // Use _currentUser.Username
+                    string usernameToDelete = _currentUser?.Username; // Store before nulling it
+                    _currentUser = null;  // Set current user to null BEFORE deletion
+                    _username = string.Empty;
+
+                    bool deleted = UserManager.DeleteUser(usernameToDelete);
                     if (deleted)
                     {
                         MessageBox.Show("Account deleted successfully.", "Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                        // Reset _currentUser and _username after deletion
-                        _currentUser = null;  // Set current user to null after deletion
-                        _username = string.Empty; // Reset the _username variable as well
-
-                        // Redirect to start page or log out the user
                         settingsPanel.Visible = false;
                         startPanel.Visible = true;
                     }
@@ -667,7 +665,6 @@ namespace SudokuApp.Forms
                     }
                 }
             };
-
             settingsPanel.Controls.Add(btnDelete);
 
             // Back button to return to the main game page
@@ -687,34 +684,6 @@ namespace SudokuApp.Forms
             };
             settingsPanel.Controls.Add(btnBack);
         }
-
-
-        //private void LoginUser(string username, string password)
-        //{
-        //    User user = UserManager.GetUser(username, password);  // Fetch the user object
-        //    //User user = UserManager.LoadUser(username);
-        //    //User? user = LoadUser(username);  // Load the user from file
-        //    //if (user != null && VerifyPassword(password, user.Password))
-
-        //        if (user != null)
-        //    {
-        //        _currentUser = user;  // Store the user object in the current session
-        //        _username = _currentUser.Username;  // Set _username with the logged-in user's username
-
-        //        ShowSudokuPage();  // Show the main Sudoku page after successful login
-        //        RefreshUI();  // Refresh the UI
-        //    }
-        //    else
-        //    {
-        //        MessageBox.Show("Invalid login. Please try again.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        //    }
-        //}
-
-        //private bool VerifyPassword(string enteredPassword, string storedHashedPassword)
-        //{
-        //    string hashedEnteredPassword = HashPassword(enteredPassword);  // Hash the entered password
-        //    return string.Equals(hashedEnteredPassword, storedHashedPassword, StringComparison.Ordinal);
-        //}
 
         private void LoginUser(string username, string password)
         {
@@ -877,9 +846,6 @@ namespace SudokuApp.Forms
             }
         }
 
-
-
-
         private async Task btnGenerate_Click(object sender, EventArgs e)
         {
             // Disable buttons and update UI elements
@@ -932,7 +898,7 @@ namespace SudokuApp.Forms
             }
             finally
             {
-                // Re-enable buttons
+                // Re-enable buttons, including solve since this is a new puzzle.
                 this.Invoke((MethodInvoker)delegate
                 {
                     btnGenerate.Enabled = true;
@@ -940,10 +906,8 @@ namespace SudokuApp.Forms
                     btnReset.Enabled = true;
                     btnHint.Enabled = true;
                 });
-
             }
         }
-
 
         private async Task SolvePuzzleAsync()
         {
@@ -989,14 +953,28 @@ namespace SudokuApp.Forms
                 }
             }
 
-            // Solve the puzzle asynchronously
-            bool solved = await SudokuSolver.SolvePuzzleAsync(puzzle);
+            // Create a temporary copy of the puzzle for solving.
+            // In this copy, reset any editable (user input) cells to 0.
+            SudokuPuzzle puzzleForSolving = new SudokuPuzzle(puzzle.Size);
+            for (int i = 0; i < gridSize; i++)
+            {
+                for (int j = 0; j < gridSize; j++)
+                {
+                    // If the cell is editable, ignore the user's value by setting it to 0.
+                    // Otherwise, use the original clue.
+                    puzzleForSolving.Board[i, j] = wasEditable[i, j] ? 0 : puzzle.Board[i, j];
+                }
+            }
+
+            // Solve the clean puzzle asynchronously
+            bool solved = await SudokuSolver.SolvePuzzleAsync(puzzleForSolving);
 
             if (solved)
             {
-                sudokuGrid.SetPuzzle(puzzle.Board);
+                // Update the UI with the solved board from our temporary puzzle
+                sudokuGrid.SetPuzzle(puzzleForSolving.Board);
 
-                // Reapply UI-specific formatting
+                // Reapply UI-specific formatting (hints, etc.)
                 foreach (var pos in hintPositions)
                 {
                     SudokuCell hintCell = sudokuGrid.GetCell(pos.row, pos.col);
@@ -1004,6 +982,7 @@ namespace SudokuApp.Forms
                     hintCell.IsHint = true;
                 }
 
+                // Compare each editable cell's original user input with the solved value
                 for (int i = 0; i < gridSize; i++)
                 {
                     for (int j = 0; j < gridSize; j++)
@@ -1015,47 +994,48 @@ namespace SudokuApp.Forms
                                 continue;
 
                             int userVal = userInputs[i, j];
-                            int correctVal = puzzle.Board[i, j];
+                            int correctVal = puzzleForSolving.Board[i, j];
                             if (userVal != 0)
                             {
+                                // Highlight green if correct, red if not
                                 cell.Highlight(userVal == correctVal ? Color.LightGreen : Color.LightCoral);
                             }
                         }
                     }
                 }
 
-                // Only update if a user is logged in
+                // Update progress if a user is logged in
                 if (_currentUser != null)
                 {
-                    // Increase finished puzzle count
                     _currentUser.Settings.FinishedPuzzleCount++;
-
-                    // Save progress
                     UserManager.SaveUser(_currentUser);
 
                     MessageBox.Show($"Solved! Puzzles completed: {_currentUser.Settings.FinishedPuzzleCount}");
                     Logger.Log($"Puzzle solved by {_currentUser.Username}. Total completed: {_currentUser.Settings.FinishedPuzzleCount}", "INFO");
-
-                    // Update leaderboard after successful completion
                     UpdateLeaderboard();
                 }
                 else
                 {
-                    // Handle the case for non-logged-in users if needed
                     MessageBox.Show("Solved!");
                 }
+                // Puzzle solved: leave the solve button disabled so user can't press it again.
+                btnSolve.Enabled = false;
             }
             else
             {
                 MessageBox.Show("No solution found.");
                 Logger.Log("Solve failed.", "ERROR");
+                // If unsolved, allow user to try solving again.
+                btnSolve.Enabled = true;
             }
 
+            // Re-enable the generate, reset, and hint buttons regardless.
             btnGenerate.Enabled = true;
-            btnSolve.Enabled = true;
             btnReset.Enabled = true;
             btnHint.Enabled = true;
         }
+
+
 
         private void ResetPuzzle()
         {
