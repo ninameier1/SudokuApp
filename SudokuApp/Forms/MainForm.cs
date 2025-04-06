@@ -59,6 +59,19 @@ namespace SudokuApp.Forms
             };
             this.Controls.Add(startPanel);
 
+            //// Add a label for the title
+            //Label titleLabel = new Label
+            //{
+            //    Text = "Sudoku",
+            //    Font = new Font("Arial", 50, FontStyle.Bold),
+            //    AutoSize = true,
+            //    ForeColor = Color.MidnightBlue,
+            //    TextAlign = ContentAlignment.MiddleCenter,
+            //    Left = (this.Width - 250) / 2, // Center it
+            //    Top = 200, 
+            //};
+            //startPanel.Controls.Add(titleLabel);
+
             // Add a button to start the game
             Button startGameButton = new Button
             {
@@ -345,6 +358,10 @@ namespace SudokuApp.Forms
             {
                 InitializeSudokuPage();
             }
+
+            this.FormClosing -= SudokuForm_FormClosing; // to prevent duplicate attaching
+            this.FormClosing += SudokuForm_FormClosing;
+
             sudokuPanel.Visible = true;
             sudokuGrid.ClearBoard();
             RefreshUI();
@@ -352,6 +369,7 @@ namespace SudokuApp.Forms
 
         private void InitializeSudokuPage()
         {
+
             sudokuPanel = new Panel
             {
                 Dock = DockStyle.Fill,
@@ -508,8 +526,7 @@ namespace SudokuApp.Forms
             btnLoad.Click += BtnLoad_Click;
             sudokuPanel.Controls.Add(btnLoad);
 
-
-
+            CheckBoundaryDetection();
         }
 
 
@@ -803,7 +820,21 @@ namespace SudokuApp.Forms
             }
         }
 
-   
+
+        private void CheckBoundaryDetection()
+        {
+            // check if sudokuGrid and lvLeaderboard overlap
+            if (sudokuGrid.Bounds.IntersectsWith(lvLeaderboard.Bounds))
+            {
+                MessageBox.Show("SudokuGrid and Leaderboard are overlapping!");
+            }
+
+            // check if sudokuGrid is outside the panel
+            if (sudokuGrid.Right > sudokuPanel.Width || sudokuGrid.Bottom > sudokuPanel.Height)
+            {
+                MessageBox.Show("SudokuGrid is out of bounds!");
+            }
+        }
 
 
         private void UpdateLeaderboard()
@@ -1243,6 +1274,30 @@ namespace SudokuApp.Forms
             UpdateLeaderboard();
         }
 
+        private void SudokuForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            // Only ask to save if the user is logged in
+            if (_currentUser != null)
+            {
+                var result = MessageBox.Show(
+                    "Do you want to save your progress before exiting?",
+                    "Save Progress",
+                    MessageBoxButtons.YesNoCancel,
+                    MessageBoxIcon.Question
+                );
+
+                if (result == DialogResult.Yes)
+                {
+                    BtnSave_Click(sender, e);
+                }
+                else if (result == DialogResult.Cancel)
+                {
+                    e.Cancel = true;
+                }
+            }
+            // If the user is not logged in, just close immediately (no prompt)
+        }
+
 
         private void BtnSave_Click(object sender, EventArgs e)
         {
@@ -1311,11 +1366,5 @@ namespace SudokuApp.Forms
                 MessageBox.Show($"An error occurred while loading the game: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
-
-
-
-
-
     }
 }
