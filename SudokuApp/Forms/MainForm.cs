@@ -49,7 +49,8 @@ namespace SudokuApp.Forms
             InitializeStartPage();
         }
 
-        private void InitializeStartPage()
+
+        public void InitializeStartPage()
         {
             // Create the start page panel
             startPanel = new Panel
@@ -59,18 +60,18 @@ namespace SudokuApp.Forms
             };
             this.Controls.Add(startPanel);
 
-            //// Add a label for the title
-            //Label titleLabel = new Label
-            //{
-            //    Text = "Sudoku",
-            //    Font = new Font("Arial", 50, FontStyle.Bold),
-            //    AutoSize = true,
-            //    ForeColor = Color.MidnightBlue,
-            //    TextAlign = ContentAlignment.MiddleCenter,
-            //    Left = (this.Width - 250) / 2, // Center it
-            //    Top = 200, 
-            //};
-            //startPanel.Controls.Add(titleLabel);
+            // Add a label for the title
+            Label titleLabel = new Label
+            {
+                Text = "Sudoku",
+                Font = new Font("Arial", 50, FontStyle.Bold),
+                AutoSize = true,
+                ForeColor = Color.MidnightBlue,
+                TextAlign = ContentAlignment.MiddleCenter,
+                Left = (this.Width - 250) / 2, // Center it
+                Top = 200,
+            };
+            startPanel.Controls.Add(titleLabel);
 
             // Add a button to start the game
             Button startGameButton = new Button
@@ -107,8 +108,6 @@ namespace SudokuApp.Forms
             loginButton.Click += LoginButton_Click;
             startPanel.Controls.Add(loginButton);
         }
-
-
 
         private void LoginButton_Click(object sender, EventArgs e)
         {
