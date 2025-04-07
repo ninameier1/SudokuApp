@@ -50,15 +50,4 @@ namespace SudokuApp.Tests.Unit
             Assert.IsNotNull(loginButton, "Login button is missing in login panel.");
         }
     }
-
-    // Helper extension to invoke private methods for testing purposes.
-    //public static class ReflectionExtensions
-    //{
-    //    public static void InvokePrivateMethod(this object obj, string methodName, params object[] parameters)
-    //    {
-    //        var type = obj.GetType();
-    //        var method = type.GetMethod(methodName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-    //        method?.Invoke(obj, parameters);
-    //    }
-    //}
 }
